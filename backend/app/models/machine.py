@@ -8,15 +8,19 @@ from app.database import Base
 class MachineCategory(str, enum.Enum):
     tractor = "Traktor"
     harvester = "Mähdrescher"
+    forage_harvester = "Feldhäcksler"
     seeder = "Sämaschine"
     sprayer = "Feldspritze"
     fertilizer = "Düngerstreuer"
-    trailer = "Anhänger"
-    loader = "Lader"
-    mower = "Mähwerk"
+    slurry = "Güllefass"
+    manure = "Miststreuer"
+    trailer = "Anhänger / Kipper"
+    loader = "Radlader / Teleskoplader"
+    mower = "Mähwerk / Schwader"
     baler = "Ballenpresse"
     plow = "Pflug"
-    cultivator = "Grubber"
+    cultivator = "Grubber / Egge"
+    transport = "Transporter / LKW"
     other = "Sonstiges"
 
 
@@ -26,6 +30,7 @@ class MachineStatus(str, enum.Enum):
     maintenance = "Wartung"
     rented_out = "verliehen"
     broken = "defekt"
+    sold = "verkauft"
 
 
 class Machine(Base):
@@ -36,10 +41,12 @@ class Machine(Base):
     name = Column(String(100), nullable=False)
     brand = Column(String(50))
     model = Column(String(100))
+    license_plate = Column(String(20))
     year = Column(Integer)
     category = Column(Enum(MachineCategory), default=MachineCategory.other)
     status = Column(Enum(MachineStatus), default=MachineStatus.available)
     purchase_price = Column(Float, default=0)
+    purchase_date = Column(DateTime(timezone=True))
     current_value = Column(Float, default=0)
     hourly_rental_rate = Column(Float, default=0)
     daily_rental_rate = Column(Float, default=0)
@@ -47,9 +54,17 @@ class Machine(Base):
     notes = Column(Text)
     image_url = Column(String(255))
     is_available_for_rental = Column(Boolean, default=False)
+    # Lending
+    lent_to_farm_id = Column(Integer, ForeignKey("farms.id"), nullable=True)
+    # Sale
+    is_sold = Column(Boolean, default=False)
+    sale_price = Column(Float, default=0)
+    sold_at = Column(DateTime(timezone=True))
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    farm = relationship("Farm", back_populates="machines")
+    farm = relationship("Farm", back_populates="machines", foreign_keys=[farm_id])
+    lent_to_farm = relationship("Farm", foreign_keys=[lent_to_farm_id])
     rentals = relationship("MachineRental", back_populates="machine")
 
 

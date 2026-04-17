@@ -1,153 +1,496 @@
 import { useEffect, useState } from 'react';
 import { useFarmStore } from '../store/farmStore';
 import { machinesApi } from '../services/api';
+import {
+  Tractor, Plus, Trash2, X, ArrowLeftRight, ShoppingCart,
+  CheckCircle2, Circle, Wrench, AlertCircle, BadgeCheck,
+  ChevronDown, Search, RotateCcw,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Tractor, Plus, Edit2, Trash2, X, RotateCcw } from 'lucide-react';
 
-const CATEGORIES = ['Traktor','Mähdrescher','Sämaschine','Feldspritze','Düngerstreuer','Anhänger','Lader','Mähwerk','Ballenpresse','Pflug','Grubber','Sonstiges'];
-const STATUSES = ['verfügbar','im Einsatz','Wartung','verliehen','defekt'];
-const STATUS_COLORS: Record<string, string> = {
-  'verfügbar': 'bg-green-100 text-green-700 border-green-200',
-  'im Einsatz': 'bg-blue-100 text-blue-700 border-blue-200',
-  'Wartung': 'bg-amber-100 text-amber-700 border-amber-200',
-  'verliehen': 'bg-purple-100 text-purple-700 border-purple-200',
-  'defekt': 'bg-red-100 text-red-700 border-red-200',
+interface Machine {
+  id: number;
+  name: string;
+  brand: string | null;
+  model: string | null;
+  license_plate: string | null;
+  year: number | null;
+  category: string;
+  status: string;
+  purchase_price: number;
+  is_sold: boolean;
+  sale_price: number;
+  sold_at: string | null;
+  lent_to_farm_id: number | null;
+  lent_to_farm_name: string | null;
+  notes: string | null;
+}
+
+interface Farm { id: number; name: string; game_version: string; }
+
+const CATEGORIES = [
+  'Traktor', 'Mähdrescher', 'Feldhäcksler', 'Sämaschine', 'Feldspritze',
+  'Düngerstreuer', 'Güllefass', 'Miststreuer', 'Anhänger / Kipper',
+  'Radlader / Teleskoplader', 'Mähwerk / Schwader', 'Ballenpresse',
+  'Pflug', 'Grubber / Egge', 'Transporter / LKW', 'Sonstiges',
+];
+
+const CATEGORY_ICONS: Record<string, string> = {
+  'Traktor': '🚜', 'Mähdrescher': '🌾', 'Feldhäcksler': '🌿',
+  'Sämaschine': '🌱', 'Feldspritze': '💧', 'Düngerstreuer': '🪣',
+  'Güllefass': '🛢️', 'Miststreuer': '🔄', 'Anhänger / Kipper': '🚛',
+  'Radlader / Teleskoplader': '🏗️', 'Mähwerk / Schwader': '✂️',
+  'Ballenpresse': '📦', 'Pflug': '⚙️', 'Grubber / Egge': '🔧',
+  'Transporter / LKW': '🚚', 'Sonstiges': '🔩',
 };
 
-const EMPTY_FORM = { name: '', brand: '', model: '', year: '', category: 'Traktor', status: 'verfügbar', purchase_price: '', current_value: '', operating_hours: '', hourly_rental_rate: '', daily_rental_rate: '', is_available_for_rental: false, notes: '' };
+const STATUS_STYLE: Record<string, string> = {
+  'verfügbar':  'bg-green-100 text-green-700 border-green-200',
+  'im Einsatz': 'bg-blue-100 text-blue-700 border-blue-200',
+  'Wartung':    'bg-amber-100 text-amber-700 border-amber-200',
+  'verliehen':  'bg-purple-100 text-purple-700 border-purple-200',
+  'defekt':     'bg-red-100 text-red-700 border-red-200',
+  'verkauft':   'bg-gray-100 text-gray-500 border-gray-200',
+};
+
+const EMPTY_BUY = {
+  name: '', brand: '', model: '', license_plate: '',
+  year: '', category: 'Traktor', purchase_price: '', notes: '',
+};
+
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl">
+          <h3 className="font-bold text-gray-900 text-lg">{title}</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"><X size={18} /></button>
+        </div>
+        <div className="px-6 py-5">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const inp = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition';
+const sel = inp + ' bg-white appearance-none cursor-pointer';
 
 export default function MachinesPage() {
-  const { currentFarm } = useFarmStore();
-  const [machines, setMachines] = useState<any[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState<any>(EMPTY_FORM);
-  const [filter, setFilter] = useState('');
-  const [rentalMachine, setRentalMachine] = useState<any>(null);
-  const [rental, setRental] = useState({ renter_name: '', renter_farm: '', start_date: '', total_hours: '', total_cost: '', notes: '' });
+  const { currentFarm, farms } = useFarmStore();
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState<'all' | 'available' | 'lent' | 'sold'>('all');
+  const [search, setSearch] = useState('');
+
+  const [buyModal, setBuyModal] = useState(false);
+  const [lendTarget, setLendTarget] = useState<Machine | null>(null);
+  const [sellTarget, setSellTarget] = useState<Machine | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Machine | null>(null);
+
+  const [buyForm, setBuyForm] = useState<any>(EMPTY_BUY);
+  const [lendFarmId, setLendFarmId] = useState('');
+  const [salePrice, setSalePrice] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const otherFarms: Farm[] = farms.filter((f: any) => f.id !== currentFarm?.id);
 
   useEffect(() => { if (currentFarm) load(); }, [currentFarm]);
 
   const load = async () => {
     if (!currentFarm) return;
-    const r = await machinesApi.list(currentFarm.id);
-    setMachines(r.data);
+    setLoading(true);
+    try { const r = await machinesApi.list(currentFarm.id); setMachines(r.data); }
+    finally { setLoading(false); }
   };
 
-  const save = async () => {
-    if (!currentFarm || !form.name.trim()) return toast.error('Name erforderlich');
+  const handleBuy = async () => {
+    if (!currentFarm || !buyForm.name.trim()) return toast.error('Bezeichnung erforderlich');
+    setSaving(true);
     try {
-      const payload = { ...form, year: form.year ? parseInt(form.year) : null, purchase_price: parseFloat(form.purchase_price)||0, current_value: parseFloat(form.current_value)||0, operating_hours: parseFloat(form.operating_hours)||0, hourly_rental_rate: parseFloat(form.hourly_rental_rate)||0, daily_rental_rate: parseFloat(form.daily_rental_rate)||0 };
-      if (editId) await machinesApi.update(currentFarm.id, editId, payload);
-      else await machinesApi.create(currentFarm.id, payload);
-      toast.success(editId ? 'Maschine aktualisiert' : 'Maschine hinzugefügt');
-      setShowForm(false); setEditId(null); setForm(EMPTY_FORM); load();
+      await machinesApi.create(currentFarm.id, {
+        ...buyForm,
+        year: buyForm.year ? parseInt(buyForm.year) : null,
+        purchase_price: parseFloat(buyForm.purchase_price) || 0,
+      });
+      toast.success(`„${buyForm.name}" zum Fuhrpark hinzugefügt`);
+      setBuyModal(false); setBuyForm(EMPTY_BUY); load();
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+    finally { setSaving(false); }
+  };
+
+  const handleLend = async () => {
+    if (!currentFarm || !lendTarget || !lendFarmId) return toast.error('Bitte einen Hof auswählen');
+    setSaving(true);
+    try {
+      const r = await machinesApi.lend(currentFarm.id, lendTarget.id, parseInt(lendFarmId));
+      setMachines(ms => ms.map(m => m.id === lendTarget.id ? r.data : m));
+      toast.success(`Fahrzeug an „${r.data.lent_to_farm_name}" verliehen`);
+      setLendTarget(null); setLendFarmId('');
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+    finally { setSaving(false); }
+  };
+
+  const handleUnlend = async (machine: Machine) => {
+    if (!currentFarm) return;
+    try {
+      const r = await machinesApi.unlend(currentFarm.id, machine.id);
+      setMachines(ms => ms.map(m => m.id === machine.id ? r.data : m));
+      toast.success('Fahrzeug zurückgekehrt');
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
   };
 
-  const del = async (id: number) => {
-    if (!currentFarm || !confirm('Maschine wirklich löschen?')) return;
-    await machinesApi.delete(currentFarm.id, id);
-    toast.success('Gelöscht'); load();
-  };
-
-  const startEdit = (m: any) => { setForm({ ...m, year: m.year||'', purchase_price: m.purchase_price||'', current_value: m.current_value||'', operating_hours: m.operating_hours||'', hourly_rental_rate: m.hourly_rental_rate||'', daily_rental_rate: m.daily_rental_rate||'' }); setEditId(m.id); setShowForm(true); };
-
-  const saveRental = async () => {
-    if (!currentFarm || !rentalMachine || !rental.renter_name) return toast.error('Mieter erforderlich');
+  const handleSell = async () => {
+    if (!currentFarm || !sellTarget) return;
+    const price = parseFloat(salePrice);
+    if (isNaN(price) || price < 0) return toast.error('Ungültiger Verkaufspreis');
+    setSaving(true);
     try {
-      await machinesApi.createRental(currentFarm.id, rentalMachine.id, { ...rental, start_date: new Date(rental.start_date).toISOString(), total_hours: parseFloat(rental.total_hours)||null, total_cost: parseFloat(rental.total_cost)||null });
-      toast.success('Verleih eingetragen'); setRentalMachine(null); setRental({ renter_name: '', renter_farm: '', start_date: '', total_hours: '', total_cost: '', notes: '' }); load();
-    } catch (e: any) { toast.error('Fehler'); }
+      const r = await machinesApi.sell(currentFarm.id, sellTarget.id, price);
+      setMachines(ms => ms.map(m => m.id === sellTarget.id ? r.data : m));
+      toast.success(`„${sellTarget.name}" verkauft — ${price.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} gutgeschrieben`);
+      setSellTarget(null); setSalePrice('');
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+    finally { setSaving(false); }
   };
 
-  const filtered = machines.filter(m => m.name.toLowerCase().includes(filter.toLowerCase()) || m.brand?.toLowerCase().includes(filter.toLowerCase()));
+  const handleDelete = async () => {
+    if (!currentFarm || !deleteTarget) return;
+    try {
+      await machinesApi.delete(currentFarm.id, deleteTarget.id);
+      setMachines(ms => ms.filter(m => m.id !== deleteTarget.id));
+      toast.success('Fahrzeug gelöscht'); setDeleteTarget(null);
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+  };
+
+  const filtered = machines.filter(m => {
+    const q = search.toLowerCase();
+    const ok = !q || m.name.toLowerCase().includes(q) || (m.brand || '').toLowerCase().includes(q) ||
+      (m.license_plate || '').toLowerCase().includes(q) || m.category.toLowerCase().includes(q);
+    if (!ok) return false;
+    if (filter === 'available') return !m.is_sold && m.status !== 'verliehen';
+    if (filter === 'lent') return m.status === 'verliehen' && !m.is_sold;
+    if (filter === 'sold') return m.is_sold;
+    return true;
+  });
+
+  const counts = {
+    total: machines.length,
+    available: machines.filter(m => !m.is_sold && m.status === 'verfügbar').length,
+    lent: machines.filter(m => m.status === 'verliehen' && !m.is_sold).length,
+    sold: machines.filter(m => m.is_sold).length,
+  };
+
+  const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center"><Tractor className="w-5 h-5 text-white" /></div>
-          <div><h1 className="text-2xl font-bold text-gray-900">Maschinen</h1><p className="text-gray-500 text-sm">{machines.length} Maschinen · Fuhrpark</p></div>
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+            <Tractor className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Fuhrpark</h1>
+            <p className="text-gray-500 text-sm">{counts.total} Fahrzeuge · {counts.available} verfügbar</p>
+          </div>
         </div>
-        <button onClick={() => { setEditId(null); setForm(EMPTY_FORM); setShowForm(true); }} className="btn-primary flex items-center gap-2"><Plus size={16} /> Maschine</button>
+        <button onClick={() => { setBuyForm(EMPTY_BUY); setBuyModal(true); }} className="btn-primary flex items-center gap-2">
+          <ShoppingCart size={16} /> Fahrzeug kaufen
+        </button>
       </div>
 
-      <input className="input max-w-sm" placeholder="Suchen..." value={filter} onChange={e => setFilter(e.target.value)} />
-
-      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map(m => (
-          <div key={m.id} className="card hover:shadow-md transition-all">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="font-bold text-gray-900">{m.name}</h3>
-                <p className="text-sm text-gray-500">{m.brand} {m.model} {m.year && `(${m.year})`}</p>
-              </div>
-              <span className={`badge border text-xs ${STATUS_COLORS[m.status] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>{m.status}</span>
-            </div>
-            <div className="text-xs text-gray-500 space-y-1 mb-4">
-              <div className="flex justify-between"><span>Kategorie</span><span className="font-medium text-gray-700">{m.category}</span></div>
-              <div className="flex justify-between"><span>Betriebsstunden</span><span className="font-medium text-gray-700">{m.operating_hours.toFixed(0)} h</span></div>
-              {m.purchase_price > 0 && <div className="flex justify-between"><span>Kaufpreis</span><span className="font-medium text-gray-700">{m.purchase_price.toLocaleString('de-DE', {style:'currency',currency:'EUR'})}</span></div>}
-              {m.is_available_for_rental && <div className="flex justify-between"><span>Verleih/h</span><span className="font-medium text-green-600">{m.hourly_rental_rate.toLocaleString('de-DE', {style:'currency',currency:'EUR'})}</span></div>}
-            </div>
-            <div className="flex gap-2 pt-3 border-t border-gray-100">
-              {m.is_available_for_rental && <button onClick={() => setRentalMachine(m)} className="flex-1 text-xs text-purple-600 hover:bg-purple-50 py-1.5 rounded-lg border border-purple-200 flex items-center justify-center gap-1"><RotateCcw size={12} /> Verleihen</button>}
-              <button onClick={() => startEdit(m)} className="flex-1 text-xs text-blue-600 hover:bg-blue-50 py-1.5 rounded-lg border border-blue-200 flex items-center justify-center gap-1"><Edit2 size={12} /> Bearbeiten</button>
-              <button onClick={() => del(m.id)} className="text-xs text-red-600 hover:bg-red-50 py-1.5 px-3 rounded-lg border border-red-200"><Trash2 size={12} /></button>
-            </div>
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Gesamt', value: counts.total, color: 'text-gray-900' },
+          { label: 'Verfügbar', value: counts.available, color: 'text-green-600' },
+          { label: 'Verliehen', value: counts.lent, color: 'text-purple-600' },
+          { label: 'Verkauft', value: counts.sold, color: 'text-gray-400' },
+        ].map(s => (
+          <div key={s.label} className="card py-3">
+            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
+            <p className={`text-2xl font-bold mt-0.5 ${s.color}`}>{s.value}</p>
           </div>
         ))}
-        {filtered.length === 0 && <div className="col-span-3 text-center py-16 text-gray-400"><Tractor className="mx-auto mb-3 opacity-30" size={40} /><p>Keine Maschinen vorhanden</p></div>}
       </div>
 
-      {/* Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b"><h2 className="font-bold text-lg">{editId ? 'Maschine bearbeiten' : 'Neue Maschine'}</h2><button onClick={() => setShowForm(false)}><X size={20} /></button></div>
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2"><label className="label">Name *</label><input className="input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="z.B. John Deere 6R 185" /></div>
-                <div><label className="label">Marke</label><input className="input" value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} placeholder="John Deere" /></div>
-                <div><label className="label">Modell</label><input className="input" value={form.model} onChange={e => setForm({...form, model: e.target.value})} placeholder="6R 185" /></div>
-                <div><label className="label">Baujahr</label><input className="input" type="number" value={form.year} onChange={e => setForm({...form, year: e.target.value})} placeholder="2023" /></div>
-                <div><label className="label">Kategorie</label><select className="input" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>{CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
-                <div><label className="label">Status</label><select className="input" value={form.status} onChange={e => setForm({...form, status: e.target.value})}>{STATUSES.map(s => <option key={s}>{s}</option>)}</select></div>
-                <div><label className="label">Betriebsstunden</label><input className="input" type="number" value={form.operating_hours} onChange={e => setForm({...form, operating_hours: e.target.value})} /></div>
-                <div><label className="label">Kaufpreis (€)</label><input className="input" type="number" value={form.purchase_price} onChange={e => setForm({...form, purchase_price: e.target.value})} /></div>
-                <div><label className="label">Aktueller Wert (€)</label><input className="input" type="number" value={form.current_value} onChange={e => setForm({...form, current_value: e.target.value})} /></div>
-              </div>
-              <div className="flex items-center gap-2"><input type="checkbox" id="rental" checked={form.is_available_for_rental} onChange={e => setForm({...form, is_available_for_rental: e.target.checked})} className="rounded" /><label htmlFor="rental" className="text-sm font-medium">Für Verleih verfügbar</label></div>
-              {form.is_available_for_rental && <div className="grid grid-cols-2 gap-4">
-                <div><label className="label">Stundenpreis (€/h)</label><input className="input" type="number" value={form.hourly_rental_rate} onChange={e => setForm({...form, hourly_rental_rate: e.target.value})} /></div>
-                <div><label className="label">Tagespreis (€/Tag)</label><input className="input" type="number" value={form.daily_rental_rate} onChange={e => setForm({...form, daily_rental_rate: e.target.value})} /></div>
-              </div>}
-              <div><label className="label">Notizen</label><textarea className="input h-20 resize-none" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /></div>
-            </div>
-            <div className="flex gap-3 p-6 border-t"><button onClick={save} className="btn-primary flex-1">{editId ? 'Speichern' : 'Hinzufügen'}</button><button onClick={() => setShowForm(false)} className="btn-secondary px-6">Abbrechen</button></div>
+      {/* Filter + search */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Suchen…"
+            className="w-full border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+        </div>
+        <div className="flex gap-1.5 flex-wrap">
+          {(['all', 'available', 'lent', 'sold'] as const).map(f => {
+            const labels = { all: 'Alle', available: 'Verfügbar', lent: 'Verliehen', sold: 'Verkauft' };
+            return (
+              <button key={f} onClick={() => setFilter(f)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${filter === f ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                {labels[f]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Table */}
+      {loading ? (
+        <div className="card flex justify-center py-16 text-gray-400">Lade Fuhrpark…</div>
+      ) : filtered.length === 0 ? (
+        <div className="card text-center py-16">
+          <p className="text-4xl mb-3">🚜</p>
+          <p className="text-gray-500 font-medium">
+            {machines.length === 0 ? 'Noch keine Fahrzeuge im Fuhrpark' : 'Keine Fahrzeuge gefunden'}
+          </p>
+          {machines.length === 0 && (
+            <button onClick={() => setBuyModal(true)} className="btn-primary mt-4 inline-flex items-center gap-2">
+              <Plus size={15} /> Erstes Fahrzeug kaufen
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="card p-0 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 text-xs uppercase tracking-wide text-gray-400">
+                  <th className="text-left px-5 py-3">Fahrzeug</th>
+                  <th className="text-left px-5 py-3 hidden sm:table-cell">Kennzeichen</th>
+                  <th className="text-left px-5 py-3 hidden md:table-cell">Kaufpreis</th>
+                  <th className="text-left px-5 py-3">Status</th>
+                  <th className="text-left px-5 py-3 hidden lg:table-cell">Verliehen an</th>
+                  <th className="text-right px-5 py-3">Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(m => (
+                  <tr key={m.id} className={`border-b border-gray-50 hover:bg-gray-50/60 transition ${m.is_sold ? 'opacity-60' : ''}`}>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{CATEGORY_ICONS[m.category] || '🔩'}</span>
+                        <div>
+                          <p className="font-semibold text-gray-900">{m.name}</p>
+                          <p className="text-xs text-gray-400">{[m.brand, m.model, m.year].filter(Boolean).join(' · ')}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 hidden sm:table-cell">
+                      {m.license_plate
+                        ? <span className="font-mono text-xs bg-yellow-50 border border-yellow-200 rounded px-2 py-0.5">{m.license_plate}</span>
+                        : <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="px-5 py-3.5 hidden md:table-cell text-gray-600">
+                      {m.purchase_price > 0 ? fmt(m.purchase_price) : '—'}
+                      {m.is_sold && m.sale_price > 0 && (
+                        <p className="text-xs text-green-600">Verkauft: {fmt(m.sale_price)}</p>
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border ${STATUS_STYLE[m.status] || STATUS_STYLE['verfügbar']}`}>
+                        {m.status === 'verfügbar' && <CheckCircle2 size={11} />}
+                        {m.status === 'verliehen' && <ArrowLeftRight size={11} />}
+                        {m.status === 'verkauft' && <BadgeCheck size={11} />}
+                        {m.status === 'Wartung' && <Wrench size={11} />}
+                        {m.status === 'defekt' && <AlertCircle size={11} />}
+                        {m.status === 'im Einsatz' && <Circle size={11} />}
+                        {m.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 hidden lg:table-cell">
+                      {m.lent_to_farm_name
+                        ? <span className="flex items-center gap-1 text-purple-600 text-xs font-medium"><ArrowLeftRight size={12} />{m.lent_to_farm_name}</span>
+                        : <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center justify-end gap-1">
+                        {!m.is_sold && (
+                          <>
+                            {m.status === 'verliehen' ? (
+                              <button onClick={() => handleUnlend(m)} title="Zurückgekehrt"
+                                className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 transition">
+                                <RotateCcw size={15} />
+                              </button>
+                            ) : (
+                              <button onClick={() => { setLendTarget(m); setLendFarmId(''); }} title="Verleihen"
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition">
+                                <ArrowLeftRight size={15} />
+                              </button>
+                            )}
+                            <button onClick={() => { setSellTarget(m); setSalePrice(''); }} title="Verkaufen"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition">
+                              <ShoppingCart size={15} />
+                            </button>
+                          </>
+                        )}
+                        <button onClick={() => setDeleteTarget(m)} title="Löschen"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* Rental Modal */}
-      {rentalMachine && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b"><h2 className="font-bold text-lg">Verleih: {rentalMachine.name}</h2><button onClick={() => setRentalMachine(null)}><X size={20} /></button></div>
-            <div className="p-6 space-y-4">
-              <div><label className="label">Mieter *</label><input className="input" value={rental.renter_name} onChange={e => setRental({...rental, renter_name: e.target.value})} placeholder="Name des Mieters" /></div>
-              <div><label className="label">Betrieb des Mieters</label><input className="input" value={rental.renter_farm} onChange={e => setRental({...rental, renter_farm: e.target.value})} /></div>
-              <div><label className="label">Startdatum *</label><input className="input" type="datetime-local" value={rental.start_date} onChange={e => setRental({...rental, start_date: e.target.value})} /></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div><label className="label">Stunden</label><input className="input" type="number" value={rental.total_hours} onChange={e => setRental({...rental, total_hours: e.target.value})} /></div>
-                <div><label className="label">Gesamtkosten (€)</label><input className="input" type="number" value={rental.total_cost} onChange={e => setRental({...rental, total_cost: e.target.value})} /></div>
+      {/* BUY MODAL */}
+      {buyModal && (
+        <Modal title="Fahrzeug kaufen" onClose={() => setBuyModal(false)}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Field label="Bezeichnung *">
+                  <input autoFocus value={buyForm.name} onChange={e => setBuyForm((f: any) => ({ ...f, name: e.target.value }))}
+                    placeholder="z. B. John Deere 6R 150" className={inp} />
+                </Field>
               </div>
-              <div><label className="label">Notizen</label><textarea className="input h-16 resize-none" value={rental.notes} onChange={e => setRental({...rental, notes: e.target.value})} /></div>
+              <div className="col-span-2">
+                <Field label="Fahrzeugkategorie">
+                  <div className="relative">
+                    <select value={buyForm.category} onChange={e => setBuyForm((f: any) => ({ ...f, category: e.target.value }))} className={sel}>
+                      {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </Field>
+              </div>
+              <Field label="Marke">
+                <input value={buyForm.brand} onChange={e => setBuyForm((f: any) => ({ ...f, brand: e.target.value }))}
+                  placeholder="John Deere, Fendt…" className={inp} />
+              </Field>
+              <Field label="Modell">
+                <input value={buyForm.model} onChange={e => setBuyForm((f: any) => ({ ...f, model: e.target.value }))}
+                  placeholder="6R 150, 724…" className={inp} />
+              </Field>
+              <Field label="Kennzeichen">
+                <input value={buyForm.license_plate} onChange={e => setBuyForm((f: any) => ({ ...f, license_plate: e.target.value.toUpperCase() }))}
+                  placeholder="AB-CD 1234" className={`${inp} font-mono`} />
+              </Field>
+              <Field label="Baujahr">
+                <input type="number" value={buyForm.year} onChange={e => setBuyForm((f: any) => ({ ...f, year: e.target.value }))}
+                  placeholder="2023" min={1950} max={2030} className={inp} />
+              </Field>
+              <div className="col-span-2">
+                <Field label="Kaufpreis (€)">
+                  <input type="number" value={buyForm.purchase_price} onChange={e => setBuyForm((f: any) => ({ ...f, purchase_price: e.target.value }))}
+                    placeholder="0" min={0} className={inp} />
+                  {parseFloat(buyForm.purchase_price) > 0 && (
+                    <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                      <AlertCircle size={11} />
+                      {parseFloat(buyForm.purchase_price).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} werden vom Hofkapital abgezogen
+                    </p>
+                  )}
+                </Field>
+              </div>
+              <div className="col-span-2">
+                <Field label="Notizen">
+                  <textarea value={buyForm.notes} onChange={e => setBuyForm((f: any) => ({ ...f, notes: e.target.value }))}
+                    rows={2} placeholder="Optionale Anmerkungen…" className={`${inp} resize-none`} />
+                </Field>
+              </div>
             </div>
-            <div className="flex gap-3 p-6 border-t"><button onClick={saveRental} className="btn-primary flex-1">Verleih eintragen</button><button onClick={() => setRentalMachine(null)} className="btn-secondary px-6">Abbrechen</button></div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setBuyModal(false)} className="flex-1 btn-secondary">Abbrechen</button>
+              <button onClick={handleBuy} disabled={saving || !buyForm.name.trim()}
+                className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
+                {saving ? '…' : <><ShoppingCart size={15} /> Kaufen</>}
+              </button>
+            </div>
           </div>
-        </div>
+        </Modal>
+      )}
+
+      {/* LEND MODAL */}
+      {lendTarget && (
+        <Modal title={`Verleihen: ${lendTarget.name}`} onClose={() => setLendTarget(null)}>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">An welchen Hof soll das Fahrzeug verliehen werden?</p>
+            {otherFarms.length === 0 ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
+                Du bist nur Mitglied dieses Hofes. Tritt einem weiteren Hof bei um Fahrzeuge dorthin verleihen zu können.
+              </div>
+            ) : (
+              <Field label="Zielhof">
+                <div className="relative">
+                  <select value={lendFarmId} onChange={e => setLendFarmId(e.target.value)} className={sel}>
+                    <option value="">— Hof auswählen —</option>
+                    {otherFarms.map((f: any) => <option key={f.id} value={f.id}>{f.name} ({f.game_version})</option>)}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                </div>
+              </Field>
+            )}
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setLendTarget(null)} className="flex-1 btn-secondary">Abbrechen</button>
+              <button onClick={handleLend} disabled={saving || !lendFarmId}
+                className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
+                {saving ? '…' : <><ArrowLeftRight size={15} /> Verleihen</>}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* SELL MODAL */}
+      {sellTarget && (
+        <Modal title={`Verkaufen: ${sellTarget.name}`} onClose={() => setSellTarget(null)}>
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm">
+              <p className="font-semibold text-gray-900">{sellTarget.name}</p>
+              {sellTarget.purchase_price > 0 && (
+                <p className="text-gray-500 text-xs mt-0.5">Kaufpreis war: {fmt(sellTarget.purchase_price)}</p>
+              )}
+            </div>
+            <Field label="Verkaufspreis (€)">
+              <input autoFocus type="number" value={salePrice} onChange={e => setSalePrice(e.target.value)}
+                placeholder="0" min={0} className={inp} />
+              {parseFloat(salePrice) > 0 && (
+                <p className="text-xs text-green-600 mt-1.5 flex items-center gap-1">
+                  <CheckCircle2 size={11} />
+                  {parseFloat(salePrice).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} werden dem Hofkapital gutgeschrieben
+                </p>
+              )}
+            </Field>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setSellTarget(null)} className="flex-1 btn-secondary">Abbrechen</button>
+              <button onClick={handleSell} disabled={saving || salePrice === ''}
+                className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
+                {saving ? '…' : 'Verkaufen'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* DELETE MODAL */}
+      {deleteTarget && (
+        <Modal title="Fahrzeug entfernen" onClose={() => setDeleteTarget(null)}>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Fahrzeug <span className="font-semibold text-gray-900">„{deleteTarget.name}"</span> wirklich aus dem Fuhrpark entfernen?
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 btn-secondary">Abbrechen</button>
+              <button onClick={handleDelete} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                <Trash2 size={15} /> Löschen
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import create_tables
+from sqlalchemy import text
+from app.database import create_tables, engine
 from app.routers import auth, farms, machines, fields, finances, storage, animals, biogas, todos, invoices, support, admin
 
 app = FastAPI(
@@ -35,9 +36,33 @@ def _load_config_from_db():
         db.close()
 
 
+def _migrate_columns():
+    """Add new columns to existing tables without dropping data."""
+    migrations = [
+        ("machines", "license_plate",     "VARCHAR(20)"),
+        ("machines", "purchase_date",     "DATETIME"),
+        ("machines", "lent_to_farm_id",   "INTEGER"),
+        ("machines", "is_sold",           "BOOLEAN DEFAULT 0"),
+        ("machines", "sale_price",        "FLOAT DEFAULT 0"),
+        ("machines", "sold_at",           "DATETIME"),
+    ]
+    with engine.connect() as conn:
+        for table, col, col_type in migrations:
+            try:
+                rows = conn.execute(text(f"PRAGMA table_info({table})")).fetchall()
+                existing = [r[1] for r in rows]
+                if col not in existing:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {col_type}"))
+                    conn.commit()
+                    print(f"[MIGRATE] Added {table}.{col}")
+            except Exception as e:
+                print(f"[MIGRATE] Skipped {table}.{col}: {e}")
+
+
 @app.on_event("startup")
 def startup():
     create_tables()
+    _migrate_columns()
     _load_config_from_db()
 
 
