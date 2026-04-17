@@ -184,7 +184,8 @@ def accept_invitation(inv_id: int, db: Session = Depends(get_db), user: User = D
         db.add(FarmMember(farm_id=inv.farm_id, user_id=user.id, role=inv.role, invited_by=inv.inviter_id))
     db.commit()
     farm = db.query(Farm).filter(Farm.id == inv.farm_id).first()
-    return {"message": f"Du bist jetzt Mitglied von „{farm.name if farm else ''}""}
+    farm_name = farm.name if farm else ""
+    return {"message": f"Du bist jetzt Mitglied von '{farm_name}'"}
 
 
 @router.post("/invitations/{inv_id}/reject")
