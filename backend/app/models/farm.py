@@ -28,7 +28,7 @@ class Farm(Base):
 
     owner = relationship("User", back_populates="owned_farms", foreign_keys=[owner_id])
     members = relationship("FarmMember", back_populates="farm")
-    machines = relationship("Machine", back_populates="farm")
+    machines = relationship("Machine", back_populates="farm", foreign_keys="Machine.farm_id")
     fields = relationship("Field", back_populates="farm")
     finance_entries = relationship("FinanceEntry", back_populates="farm")
     storage_items = relationship("StorageItem", back_populates="farm")
