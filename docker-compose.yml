@@ -2,19 +2,20 @@ version: '3.8'
 
 services:
   backend:
+    image: lsmanagement-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
       - db_data:/app/data
     environment:
       - DATABASE_URL=sqlite:///./data/lsmanagement.db
     restart: unless-stopped
 
   frontend:
+    image: lsmanagement-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile

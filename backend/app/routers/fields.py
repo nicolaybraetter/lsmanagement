@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 from app.database import get_db
 from app.models.field import Field, CropRotationEntry
 from app.models.farm import FarmMember
+from app.models.finance import FinanceEntry, TransactionType, FinanceCategory
+from app.models.invoice import FarmCapital
 from app.schemas.field import FieldCreate, FieldUpdate, FieldOut, CropRotationCreate, CropRotationOut
 from app.core.security import get_current_user
 from app.models.user import User
@@ -28,6 +31,25 @@ def create_field(farm_id: int, data: FieldCreate, db: Session = Depends(get_db),
     check_access(farm_id, user, db)
     field = Field(**data.model_dump(), farm_id=farm_id)
     db.add(field)
+    db.flush()
+
+    # Auto-book finance entry and update capital if purchase price is set
+    if data.is_owned and data.purchase_price and data.purchase_price > 0:
+        entry = FinanceEntry(
+            farm_id=farm_id,
+            type=TransactionType.expense,
+            category=FinanceCategory.land_purchase,
+            amount=data.purchase_price,
+            description=f"Grunderwerb Feld {data.field_number}{' – ' + data.name if data.name else ''}",
+            date=datetime.utcnow(),
+            field_id=field.id,
+            created_by=user.id,
+        )
+        db.add(entry)
+        capital = db.query(FarmCapital).filter(FarmCapital.farm_id == farm_id).first()
+        if capital:
+            capital.current_balance -= data.purchase_price
+
     db.commit()
     db.refresh(field)
     return field

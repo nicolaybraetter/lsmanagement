@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    image: lsmanagement-backend
+    volumes:
+      - db_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:///./data/lsmanagement.db
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == swarm01.braetter.local
+
+  frontend:
+    image: lsmanagement-frontend
+    ports:
+      - target: 80
+        published: 5173
+        mode: host
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == swarm01.braetter.local
+
+volumes:
+  db_data:

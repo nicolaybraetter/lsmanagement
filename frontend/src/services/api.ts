@@ -42,6 +42,9 @@ export const farmsApi = {
   members: (id: number) => api.get(`/api/farms/${id}/members`),
   invite: (id: number, data: any) => api.post(`/api/farms/${id}/members/invite`, data),
   removeMember: (farmId: number, userId: number) => api.delete(`/api/farms/${farmId}/members/${userId}`),
+  pendingInvitations: () => api.get('/api/farms/invitations/pending'),
+  acceptInvitation: (id: number) => api.post(`/api/farms/invitations/${id}/accept`),
+  rejectInvitation: (id: number) => api.post(`/api/farms/invitations/${id}/reject`),
 };
 
 // Machines

@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 from app.database import get_db
 from app.models.farm import Farm, FarmMember, MemberRole
+from app.models.invitation import FarmInvitation, InvitationStatus
 from app.models.user import User
 from app.models.todo import TodoBoard, TodoTask, TodoStatus, TodoPriority, TodoCategory
 from app.schemas.farm import FarmCreate, FarmUpdate, FarmOut, FarmMemberOut, InviteMemberRequest
 from app.core.security import get_current_user
+from app.core.email import send_farm_invitation
 
 router = APIRouter(prefix="/api/farms", tags=["farms"])
 
@@ -105,23 +108,94 @@ def list_members(farm_id: int, db: Session = Depends(get_db), user: User = Depen
 @router.post("/{farm_id}/members/invite")
 def invite_member(farm_id: int, req: InviteMemberRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     farm = get_farm_or_403(farm_id, user, db)
-    if farm.owner_id != user.id:
-        raise HTTPException(status_code=403, detail="Nur der Eigentümer kann Mitglieder einladen")
+    member_record = db.query(FarmMember).filter(FarmMember.farm_id == farm_id, FarmMember.user_id == user.id, FarmMember.is_active == True).first()
+    if farm.owner_id != user.id and (not member_record or member_record.role not in [MemberRole.owner, MemberRole.manager]):
+        raise HTTPException(status_code=403, detail="Nur Eigentümer und Manager können einladen")
     invitee = db.query(User).filter(User.username == req.username).first()
     if not invitee:
         raise HTTPException(status_code=404, detail="Benutzer nicht gefunden")
-    existing = db.query(FarmMember).filter(FarmMember.farm_id == farm_id, FarmMember.user_id == invitee.id).first()
-    if existing:
-        if existing.is_active:
-            raise HTTPException(status_code=400, detail="Benutzer ist bereits Mitglied")
-        existing.is_active = True
-        existing.role = req.role
-        db.commit()
-        return {"message": "Mitglied reaktiviert"}
-    member = FarmMember(farm_id=farm_id, user_id=invitee.id, role=req.role, invited_by=user.id)
-    db.add(member)
+    if invitee.id == user.id:
+        raise HTTPException(status_code=400, detail="Du kannst dich nicht selbst einladen")
+    existing_member = db.query(FarmMember).filter(FarmMember.farm_id == farm_id, FarmMember.user_id == invitee.id, FarmMember.is_active == True).first()
+    if existing_member:
+        raise HTTPException(status_code=400, detail="Benutzer ist bereits Mitglied dieses Hofes")
+    pending = db.query(FarmInvitation).filter(
+        FarmInvitation.farm_id == farm_id,
+        FarmInvitation.invitee_id == invitee.id,
+        FarmInvitation.status == InvitationStatus.pending
+    ).first()
+    if pending:
+        raise HTTPException(status_code=400, detail="Es gibt bereits eine ausstehende Einladung für diesen Benutzer")
+    inv = FarmInvitation(
+        farm_id=farm_id,
+        invitee_id=invitee.id,
+        inviter_id=user.id,
+        role=req.role,
+        message=getattr(req, 'message', None),
+    )
+    db.add(inv)
     db.commit()
-    return {"message": f"{invitee.username} wurde eingeladen"}
+    send_farm_invitation(
+        invitee_email=invitee.email,
+        invitee_name=invitee.full_name or invitee.username,
+        inviter_name=user.full_name or user.username,
+        farm_name=farm.name,
+        role=req.role,
+        personal_msg=getattr(req, 'message', '') or '',
+    )
+    return {"message": f"Einladung an {invitee.username} gesendet"}
+
+
+@router.get("/invitations/pending")
+def get_pending_invitations(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    invitations = db.query(FarmInvitation).filter(
+        FarmInvitation.invitee_id == user.id,
+        FarmInvitation.status == InvitationStatus.pending
+    ).all()
+    result = []
+    for inv in invitations:
+        farm = db.query(Farm).filter(Farm.id == inv.farm_id).first()
+        inviter = db.query(User).filter(User.id == inv.inviter_id).first()
+        result.append({
+            "id": inv.id,
+            "farm_id": inv.farm_id,
+            "farm_name": farm.name if farm else "Unbekannt",
+            "farm_game_version": farm.game_version if farm else "",
+            "inviter_name": inviter.full_name or inviter.username if inviter else "Unbekannt",
+            "role": inv.role,
+            "message": inv.message,
+            "created_at": inv.created_at,
+        })
+    return result
+
+
+@router.post("/invitations/{inv_id}/accept")
+def accept_invitation(inv_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    inv = db.query(FarmInvitation).filter(FarmInvitation.id == inv_id, FarmInvitation.invitee_id == user.id).first()
+    if not inv or inv.status != InvitationStatus.pending:
+        raise HTTPException(status_code=404, detail="Einladung nicht gefunden oder bereits beantwortet")
+    inv.status = InvitationStatus.accepted
+    inv.responded_at = datetime.utcnow()
+    existing = db.query(FarmMember).filter(FarmMember.farm_id == inv.farm_id, FarmMember.user_id == user.id).first()
+    if existing:
+        existing.is_active = True
+        existing.role = inv.role
+    else:
+        db.add(FarmMember(farm_id=inv.farm_id, user_id=user.id, role=inv.role, invited_by=inv.inviter_id))
+    db.commit()
+    farm = db.query(Farm).filter(Farm.id == inv.farm_id).first()
+    return {"message": f"Du bist jetzt Mitglied von „{farm.name if farm else ''}""}
+
+
+@router.post("/invitations/{inv_id}/reject")
+def reject_invitation(inv_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    inv = db.query(FarmInvitation).filter(FarmInvitation.id == inv_id, FarmInvitation.invitee_id == user.id).first()
+    if not inv or inv.status != InvitationStatus.pending:
+        raise HTTPException(status_code=404, detail="Einladung nicht gefunden oder bereits beantwortet")
+    inv.status = InvitationStatus.rejected
+    inv.responded_at = datetime.utcnow()
+    db.commit()
+    return {"message": "Einladung abgelehnt"}
 
 
 @router.delete("/{farm_id}/members/{user_id}")

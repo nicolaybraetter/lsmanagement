@@ -20,6 +20,7 @@ import ProfilePage from './pages/ProfilePage';
 import InvoicesPage from './pages/InvoicesPage';
 import FarmSettingsPage from './pages/FarmSettingsPage';
 import PriceListPage from './pages/PriceListPage';
+import SupportboxPage from './pages/SupportboxPage';
 import { useAuthStore } from './store/authStore';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,7 @@ export default function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/supportbox" element={<SupportboxPage />} />
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
         <Route path="/dashboard" element={<DashboardLayout />}>

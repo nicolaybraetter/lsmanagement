@@ -50,3 +50,4 @@ class FarmMemberOut(BaseModel):
 class InviteMemberRequest(BaseModel):
     username: str
     role: MemberRole = MemberRole.worker
+    message: Optional[str] = None

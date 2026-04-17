@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useFarmStore } from '../store/farmStore';
 import { useAuthStore } from '../store/authStore';
 import { farmsApi, machinesApi, fieldsApi, financesApi, animalsApi, storageApi } from '../services/api';
-import { Tractor, MapPin, TrendingUp, Package, PawPrint, Flame, CheckSquare, Users, Plus, ArrowRight } from 'lucide-react';
+import { Tractor, MapPin, TrendingUp, Package, PawPrint, Flame, CheckSquare, Users, Plus, ArrowRight, Mail, Check, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface Stats {
   machines: number;
@@ -19,13 +20,34 @@ export default function DashboardHome() {
   const { user } = useAuthStore();
   const [stats, setStats] = useState<Stats>({ machines: 0, fields: 0, animals: 0, storage: 0, balance: 0, totalArea: 0 });
   const [loading, setLoading] = useState(false);
+  const [invitations, setInvitations] = useState<any[]>([]);
+
+  const loadInvitations = () => farmsApi.pendingInvitations().then(r => setInvitations(r.data)).catch(() => {});
 
   useEffect(() => {
     farmsApi.list().then(r => {
       setFarms(r.data);
       if (!currentFarm && r.data.length > 0) setCurrentFarm(r.data[0]);
     });
+    loadInvitations();
   }, []);
+
+  const handleAccept = async (inv: any) => {
+    try {
+      await farmsApi.acceptInvitation(inv.id);
+      toast.success(`Du bist jetzt Mitglied von „${inv.farm_name}"`);
+      setInvitations(i => i.filter(x => x.id !== inv.id));
+      farmsApi.list().then(r => { setFarms(r.data); setCurrentFarm(r.data[r.data.length - 1]); });
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+  };
+
+  const handleReject = async (inv: any) => {
+    try {
+      await farmsApi.rejectInvitation(inv.id);
+      toast.success('Einladung abgelehnt');
+      setInvitations(i => i.filter(x => x.id !== inv.id));
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+  };
 
   useEffect(() => {
     if (!currentFarm) return;
@@ -98,6 +120,8 @@ export default function DashboardHome() {
     { to: '/dashboard/members', icon: Users, label: 'Team', desc: 'Mitglieder einladen' },
   ];
 
+  const roleLabels: Record<string, string> = { owner: 'Eigentümer', manager: 'Manager', worker: 'Mitarbeiter', viewer: 'Beobachter' };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -109,6 +133,37 @@ export default function DashboardHome() {
           <Plus size={16} /> Neuer Hof
         </Link>
       </div>
+
+      {/* Pending invitations */}
+      {invitations.length > 0 && (
+        <div className="space-y-3">
+          {invitations.map(inv => (
+            <div key={inv.id} className="bg-green-50 border border-green-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900">Einladung zum Hof „{inv.farm_name}"</p>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">{inv.inviter_name}</span> lädt dich als <span className="font-medium text-green-700">{roleLabels[inv.role] || inv.role}</span> ein
+                    {inv.farm_game_version && ` · ${inv.farm_game_version}`}
+                  </p>
+                  {inv.message && <p className="text-sm text-gray-500 mt-1 italic">„{inv.message}"</p>}
+                </div>
+              </div>
+              <div className="flex gap-2 sm:flex-shrink-0">
+                <button onClick={() => handleAccept(inv)} className="flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+                  <Check size={15} /> Annehmen
+                </button>
+                <button onClick={() => handleReject(inv)} className="flex items-center gap-1.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg border border-gray-300 transition-colors">
+                  <X size={15} /> Ablehnen
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
