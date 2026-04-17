@@ -3,10 +3,6 @@ version: '3.8'
 services:
   backend:
     image: lsmanagement-backend
-    ports:
-      - target: 8000
-        published: 8000
-        mode: host
     volumes:
       - db_data:/app/data
     environment:
