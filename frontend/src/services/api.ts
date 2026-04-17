@@ -31,6 +31,7 @@ export const authApi = {
   login: (data: any) => api.post('/api/auth/login', data),
   me: () => api.get('/api/auth/me'),
   updateProfile: (data: any) => api.put('/api/auth/me', data),
+  deleteAccount: () => api.delete('/api/auth/me'),
 };
 
 // Farms
