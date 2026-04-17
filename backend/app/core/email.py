@@ -57,7 +57,7 @@ def send_farm_invitation(invitee_email: str, invitee_name: str, inviter_name: st
       </div>
     </div>
     """
-    _send(invitee_email, f"Einladung zum Hof „{farm_name}"", html)
+    _send(invitee_email, f"Einladung: {farm_name}", html)
 
 
 def send_support_notification(operator_email: str, category: str, subject: str, message: str, sender_email: str):
