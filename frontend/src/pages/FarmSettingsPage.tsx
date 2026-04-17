@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFarmStore } from '../store/farmStore';
 import { useAuthStore } from '../store/authStore';
 import { farmsApi, invoicesApi } from '../services/api';
 import toast from 'react-hot-toast';
-import { Settings, Wallet, Save, Edit2 } from 'lucide-react';
+import { Settings, Wallet, Save, Edit2, LogOut } from 'lucide-react';
 
 export default function FarmSettingsPage() {
-  const { currentFarm, setCurrentFarm } = useFarmStore();
+  const navigate = useNavigate();
+  const { currentFarm, setCurrentFarm, farms, setFarms } = useFarmStore();
   const { user } = useAuthStore();
   const [farmForm, setFarmForm] = useState({ name: '', description: '', location: '', game_version: 'LS25', total_area: '0' });
   const [capital, setCapital] = useState<any>(null);
@@ -14,6 +16,8 @@ export default function FarmSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [savingCapital, setSavingCapital] = useState(false);
   const [editCapital, setEditCapital] = useState(false);
+  const [leaveConfirm, setLeaveConfirm] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const isOwnerOrManager = currentFarm?.owner_id === user?.id;
 
@@ -203,6 +207,49 @@ export default function FarmSettingsPage() {
           <p className="text-sm text-gray-400 mt-2">Nur Eigentümer und Manager können das Startkapital ändern.</p>
         )}
       </div>
+
+      {/* Leave farm — only for non-owners */}
+      {currentFarm && user && currentFarm.owner_id !== user.id && (
+        <div className="card border-red-200 bg-red-50/40">
+          <h2 className="font-bold text-red-700 text-lg mb-1 flex items-center gap-2">
+            <LogOut size={18} /> Hof verlassen
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Du verlässt den Hof <span className="font-semibold">{currentFarm.name}</span> und verlierst den Zugriff auf alle Daten dieses Hofes.
+          </p>
+          {!leaveConfirm ? (
+            <button onClick={() => setLeaveConfirm(true)}
+              className="flex items-center gap-2 bg-white border border-red-300 text-red-600 hover:bg-red-600 hover:text-white font-semibold px-4 py-2.5 rounded-xl transition text-sm">
+              <LogOut size={15} /> Hof verlassen
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-red-700">Bist du sicher? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+              <div className="flex gap-3">
+                <button onClick={() => setLeaveConfirm(false)} className="btn-secondary text-sm">Abbrechen</button>
+                <button disabled={leaving} onClick={async () => {
+                  if (!currentFarm || !user) return;
+                  setLeaving(true);
+                  try {
+                    await farmsApi.removeMember(currentFarm.id, user.id);
+                    toast.success(`Du hast den Hof „${currentFarm.name}" verlassen`);
+                    const remaining = farms.filter((f: any) => f.id !== currentFarm.id);
+                    setFarms(remaining);
+                    setCurrentFarm(remaining.length > 0 ? remaining[0] : null);
+                    navigate('/dashboard');
+                  } catch (e: any) {
+                    toast.error(e.response?.data?.detail || 'Fehler');
+                  } finally {
+                    setLeaving(false);
+                  }
+                }} className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold px-4 py-2.5 rounded-xl transition text-sm">
+                  {leaving ? '…' : <><LogOut size={15} /> Jetzt verlassen</>}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
