@@ -7,7 +7,7 @@ services:
       - db_data:/app/data
     environment:
       - DATABASE_URL=sqlite:///./data/lsmanagement.db
-      - "ADMIN_PASSWORD=D4sP4sswortBek0mmtKe1ner!"
+      - ADMIN_PASSWORD=matrixreloaded
       # SMTP — optional, or configure via Admin Panel
       # - SMTP_HOST=smtp.gmail.com
       # - SMTP_PORT=587
