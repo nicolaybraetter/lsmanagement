@@ -4,7 +4,9 @@ services:
   backend:
     image: lsmanagement-backend
     ports:
-      - "8000:8000"
+      - target: 8000
+        published: 8000
+        mode: host
     volumes:
       - db_data:/app/data
     environment:
@@ -17,7 +19,9 @@ services:
   frontend:
     image: lsmanagement-frontend
     ports:
-      - "5173:80"
+      - target: 80
+        published: 5173
+        mode: host
     deploy:
       placement:
         constraints:
