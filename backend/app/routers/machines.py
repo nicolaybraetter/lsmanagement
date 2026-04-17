@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 from app.database import get_db
 from app.models.machine import Machine, MachineRental, MachineStatus
 from app.models.farm import FarmMember
+from app.models.finance import FinanceEntry, TransactionType, FinanceCategory
+from app.models.invoice import FarmCapital
 from app.schemas.machine import MachineCreate, MachineUpdate, MachineOut, MachineRentalCreate, MachineRentalOut
 from app.core.security import get_current_user
 from app.models.user import User
@@ -28,6 +31,21 @@ def create_machine(farm_id: int, data: MachineCreate, db: Session = Depends(get_
     check_access(farm_id, user, db)
     machine = Machine(**data.model_dump(), farm_id=farm_id)
     db.add(machine)
+    db.flush()
+    if data.purchase_price and data.purchase_price > 0:
+        db.add(FinanceEntry(
+            farm_id=farm_id,
+            type=TransactionType.expense,
+            category=FinanceCategory.machine_purchase,
+            amount=data.purchase_price,
+            description=f"Maschinenkauf: {data.name}",
+            date=data.purchase_date or datetime.utcnow(),
+            machine_id=machine.id,
+            created_by=user.id,
+        ))
+        capital = db.query(FarmCapital).filter(FarmCapital.farm_id == farm_id).first()
+        if capital:
+            capital.current_balance -= data.purchase_price
     db.commit()
     db.refresh(machine)
     return machine
