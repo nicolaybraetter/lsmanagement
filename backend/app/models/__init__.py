@@ -7,3 +7,4 @@ from app.models.storage import StorageItem, StorageTransaction
 from app.models.animal import Stable, Animal
 from app.models.biogas import BiogasPlant, BiogasFeedEntry
 from app.models.todo import TodoTask, TodoBoard
+from app.models.invoice import Invoice, InvoiceItem, FarmCapital

@@ -104,6 +104,22 @@ export const biogasApi = {
   listFeed: (farmId: number, plantId: number) => api.get(`/api/farms/${farmId}/biogas/${plantId}/feed`),
 };
 
+// Invoices & Capital
+export const invoicesApi = {
+  // Capital
+  getCapital: (farmId: number) => api.get(`/api/invoices/capital/${farmId}`),
+  setCapital: (farmId: number, data: any) => api.put(`/api/invoices/capital/${farmId}`, data),
+  // Invoices
+  createFromFarm: (farmId: number, data: any) => api.post(`/api/invoices/from-farm/${farmId}`, data),
+  listSent: (farmId: number) => api.get(`/api/invoices/sent/${farmId}`),
+  listReceived: (farmId: number) => api.get(`/api/invoices/received/${farmId}`),
+  get: (id: number) => api.get(`/api/invoices/${id}`),
+  send: (id: number) => api.post(`/api/invoices/${id}/send`),
+  pay: (id: number) => api.post(`/api/invoices/${id}/pay`),
+  cancel: (id: number) => api.post(`/api/invoices/${id}/cancel`),
+  allFarms: () => api.get('/api/invoices/farms/all'),
+};
+
 // Todos
 export const todosApi = {
   listBoards: (farmId: number) => api.get(`/api/farms/${farmId}/todos/boards`),

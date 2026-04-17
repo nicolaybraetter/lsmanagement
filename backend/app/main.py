@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import create_tables
-from app.routers import auth, farms, machines, fields, finances, storage, animals, biogas, todos
+from app.routers import auth, farms, machines, fields, finances, storage, animals, biogas, todos, invoices
 
 app = FastAPI(
     title="LS Management API",
@@ -32,6 +32,7 @@ app.include_router(storage.router)
 app.include_router(animals.router)
 app.include_router(biogas.router)
 app.include_router(todos.router)
+app.include_router(invoices.router)
 
 
 @app.get("/")

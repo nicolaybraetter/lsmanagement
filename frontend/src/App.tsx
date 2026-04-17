@@ -17,6 +17,9 @@ import BiogasPage from './pages/BiogasPage';
 import TodoPage from './pages/TodoPage';
 import MembersPage from './pages/MembersPage';
 import ProfilePage from './pages/ProfilePage';
+import InvoicesPage from './pages/InvoicesPage';
+import FarmSettingsPage from './pages/FarmSettingsPage';
+import PriceListPage from './pages/PriceListPage';
 import { useAuthStore } from './store/authStore';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -46,8 +49,10 @@ export default function App() {
           <Route path="biogas" element={<BiogasPage />} />
           <Route path="todos" element={<TodoPage />} />
           <Route path="members" element={<MembersPage />} />
+          <Route path="invoices" element={<InvoicesPage />} />
+          <Route path="price-list" element={<PriceListPage />} />
+          <Route path="settings" element={<FarmSettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
-          <Route path="settings" element={<ProfilePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
