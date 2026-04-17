@@ -146,6 +146,13 @@ export const adminApi = {
   updateEmailConfig: (data: any) => adminAxios.put('/api/admin/email-config', data),
 };
 
+// Support
+export const supportApi = {
+  submit: (data: any) => api.post('/api/support', data),
+  list: () => api.get('/api/support'),
+  markReviewed: (id: number) => api.patch(`/api/support/${id}/review`),
+};
+
 // Todos
 export const todosApi = {
   listBoards: (farmId: number) => api.get(`/api/farms/${farmId}/todos/boards`),
