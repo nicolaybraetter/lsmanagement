@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./lsmanagement.db"
     CORS_ORIGINS: list = ["http://localhost:5173", "http://localhost:3000"]
 
+    # Superadmin
+    ADMIN_PASSWORD: str = "changeme"
+
     # Email / SMTP
     SMTP_HOST: str = ""
     SMTP_PORT: int = 587

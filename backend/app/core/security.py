@@ -3,13 +3,25 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.database import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+admin_bearer = HTTPBearer(auto_error=False)
+
+
+def verify_admin_token(credentials: HTTPAuthorizationCredentials = Depends(admin_bearer)):
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Admin-Token erforderlich")
+    try:
+        payload = jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if not payload.get("is_admin"):
+            raise HTTPException(status_code=403, detail="Kein Admin-Zugriff")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Ungültiger Admin-Token")
 
 
 def verify_password(plain: str, hashed: str) -> bool:

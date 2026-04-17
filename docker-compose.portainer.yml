@@ -7,6 +7,14 @@ services:
       - db_data:/app/data
     environment:
       - DATABASE_URL=sqlite:///./data/lsmanagement.db
+      - ADMIN_PASSWORD=changeme
+      # SMTP — optional, or configure via Admin Panel
+      # - SMTP_HOST=smtp.gmail.com
+      # - SMTP_PORT=587
+      # - SMTP_USER=dein@gmail.com
+      # - SMTP_PASSWORD=dein-app-passwort
+      # - SMTP_FROM=dein@gmail.com
+      # - OPERATOR_EMAIL=empfaenger@domain.de
     deploy:
       placement:
         constraints:

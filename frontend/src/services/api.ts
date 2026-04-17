@@ -123,6 +123,26 @@ export const invoicesApi = {
   allFarms: () => api.get('/api/invoices/farms/all'),
 };
 
+// Admin
+const adminAxios = axios.create({ baseURL: '', headers: { 'Content-Type': 'application/json' } });
+adminAxios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+export const adminApi = {
+  login: (password: string) => adminAxios.post('/api/admin/auth', { password }),
+  listUsers: () => adminAxios.get('/api/admin/users'),
+  deleteUser: (id: number) => adminAxios.delete(`/api/admin/users/${id}`),
+  resetPassword: (id: number, new_password: string) => adminAxios.put(`/api/admin/users/${id}/password`, { new_password }),
+  updateCredentials: (id: number, new_username: string, new_email?: string) =>
+    adminAxios.put(`/api/admin/users/${id}/credentials`, { new_username, new_email }),
+  toggleActive: (id: number) => adminAxios.put(`/api/admin/users/${id}/toggle-active`),
+  getEmailConfig: () => adminAxios.get('/api/admin/email-config'),
+  updateEmailConfig: (data: any) => adminAxios.put('/api/admin/email-config', data),
+};
+
 // Todos
 export const todosApi = {
   listBoards: (farmId: number) => api.get(`/api/farms/${farmId}/todos/boards`),

@@ -10,3 +10,4 @@ from app.models.todo import TodoTask, TodoBoard
 from app.models.invoice import Invoice, InvoiceItem, FarmCapital
 from app.models.support import SupportMessage
 from app.models.invitation import FarmInvitation
+from app.models.system_config import SystemConfig

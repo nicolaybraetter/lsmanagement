@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/layout/Navbar';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -21,6 +21,8 @@ import InvoicesPage from './pages/InvoicesPage';
 import FarmSettingsPage from './pages/FarmSettingsPage';
 import PriceListPage from './pages/PriceListPage';
 import SupportboxPage from './pages/SupportboxPage';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminPanel from './pages/admin/AdminPanel';
 import { useAuthStore } from './store/authStore';
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -29,11 +31,13 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export default function App() {
+function AppRoutes() {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+
   return (
-    <BrowserRouter>
-      <Toaster position="top-right" toastOptions={{ duration: 3000, style: { borderRadius: '12px', fontFamily: 'Inter, sans-serif' } }} />
-      <Navbar />
+    <>
+      {!isAdmin && <Navbar />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/supportbox" element={<SupportboxPage />} />
@@ -56,8 +60,19 @@ export default function App() {
           <Route path="settings" element={<FarmSettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/panel" element={<AdminPanel />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Toaster position="top-right" toastOptions={{ duration: 3000, style: { borderRadius: '12px', fontFamily: 'Inter, sans-serif' } }} />
+      <AppRoutes />
     </BrowserRouter>
   );
 }
