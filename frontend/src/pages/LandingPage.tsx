@@ -37,7 +37,7 @@ export default function LandingPage() {
       </Helmet>
       <div className="min-h-screen">
       {/* Maintenance Notice */}
-      <div className="bg-amber-500 text-amber-950 text-sm font-medium py-2.5 px-4 text-center flex flex-wrap items-center justify-center gap-2 z-40 relative">
+      <div style={{ marginTop: '84px' }} className="bg-amber-500 text-amber-950 text-sm font-medium py-2.5 px-4 text-center flex flex-wrap items-center justify-center gap-2 relative z-40">
         <span className="text-lg">&#x26A0;&#xFE0F;</span>
         <span>
           <strong>Tägliche Wartung:</strong> Jeden Tag von <strong>23:00 – 00:00 Uhr</strong> finden Wartungs- und Aktualisierungsarbeiten statt. In dieser Zeit kann es zu kurzen Unterbrechungen kommen.
