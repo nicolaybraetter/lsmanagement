@@ -44,19 +44,24 @@ def _calc_totals(items_data: list, tax_rate: float):
 
 
 def _enrich(inv: Invoice, db: Session) -> InvoiceOut:
+    from app.models.lohnhof import LohnhofPartner
     sender = db.query(Farm).filter(Farm.id == inv.sender_farm_id).first()
-    receiver = db.query(Farm).filter(Farm.id == inv.receiver_farm_id).first()
+    receiver = db.query(Farm).filter(Farm.id == inv.receiver_farm_id).first() if inv.receiver_farm_id else None
+    receiver_lohnhof_id = getattr(inv, "receiver_lohnhof_id", None)
+    receiver_lohnhof = db.query(LohnhofPartner).filter(LohnhofPartner.id == receiver_lohnhof_id).first() if receiver_lohnhof_id else None
+    receiver_name = (receiver.name if receiver else None) or (receiver_lohnhof.name if receiver_lohnhof else None)
     out = InvoiceOut(
         id=inv.id, invoice_number=inv.invoice_number,
-        sender_farm_id=inv.sender_farm_id, receiver_farm_id=inv.receiver_farm_id,
+        sender_farm_id=inv.sender_farm_id,
+        receiver_farm_id=inv.receiver_farm_id,
+        receiver_lohnhof_id=receiver_lohnhof_id,
         status=inv.status, issue_date=inv.issue_date, due_date=inv.due_date,
         paid_date=inv.paid_date, total_net=inv.total_net, tax_rate=inv.tax_rate,
         total_gross=inv.total_gross, notes=inv.notes, created_by=inv.created_by,
         created_at=inv.created_at,
-        items=[InvoiceOut.model_fields  # will be overridden below
-               ] if False else [],
+        items=[],
         sender_farm_name=sender.name if sender else None,
-        receiver_farm_name=receiver.name if receiver else None,
+        receiver_farm_name=receiver_name,
     )
     from app.schemas.invoice import InvoiceItemOut
     out.items = [InvoiceItemOut(
@@ -162,13 +167,30 @@ def create_invoice_from_farm(
     farm_id: int, data: InvoiceCreate,
     db: Session = Depends(get_db), user: User = Depends(get_current_user)
 ):
+    from app.models.lohnhof import LohnhofPartner
     if not _is_manager_or_owner(farm_id, user, db):
         raise HTTPException(status_code=403, detail="Kein Zugriff")
-    receiver_farm = db.query(Farm).filter(Farm.id == data.receiver_farm_id).first()
-    if not receiver_farm:
-        raise HTTPException(status_code=404, detail="Empfänger-Hof nicht gefunden")
-    if receiver_farm.id == farm_id:
-        raise HTTPException(status_code=400, detail="Rechnungsempfänger darf nicht der eigene Hof sein")
+
+    receiver_farm_id = None
+    receiver_lohnhof_id = None
+
+    if data.receiver_lohnhof_id:
+        lohnhof = db.query(LohnhofPartner).filter(
+            LohnhofPartner.id == data.receiver_lohnhof_id,
+            LohnhofPartner.farm_id == farm_id,
+        ).first()
+        if not lohnhof:
+            raise HTTPException(status_code=404, detail="Lohnhof nicht gefunden")
+        receiver_lohnhof_id = data.receiver_lohnhof_id
+    elif data.receiver_farm_id:
+        receiver_farm = db.query(Farm).filter(Farm.id == data.receiver_farm_id).first()
+        if not receiver_farm:
+            raise HTTPException(status_code=404, detail="Empfänger-Hof nicht gefunden")
+        if receiver_farm.id == farm_id:
+            raise HTTPException(status_code=400, detail="Rechnungsempfänger darf nicht der eigene Hof sein")
+        receiver_farm_id = data.receiver_farm_id
+    else:
+        raise HTTPException(status_code=422, detail="Empfänger-Hof oder Lohnhof erforderlich")
 
     items_data = [i.model_dump() for i in data.items]
     net, gross = _calc_totals(items_data, data.tax_rate)
@@ -176,7 +198,8 @@ def create_invoice_from_farm(
     invoice = Invoice(
         invoice_number=_generate_invoice_number(db, farm_id),
         sender_farm_id=farm_id,
-        receiver_farm_id=data.receiver_farm_id,
+        receiver_farm_id=receiver_farm_id,
+        receiver_lohnhof_id=receiver_lohnhof_id,
         status=InvoiceStatus.draft,
         issue_date=data.issue_date,
         due_date=data.due_date,
@@ -230,9 +253,8 @@ def get_invoice(invoice_id: int, db: Session = Depends(get_db), user: User = Dep
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
         raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
-    # Must be member of sender or receiver farm
     sender_ok = _is_farm_member(inv.sender_farm_id, user, db)
-    receiver_ok = _is_farm_member(inv.receiver_farm_id, user, db)
+    receiver_ok = inv.receiver_farm_id and _is_farm_member(inv.receiver_farm_id, user, db)
     if not sender_ok and not receiver_ok:
         raise HTTPException(status_code=403, detail="Kein Zugriff")
     return _enrich(inv, db)
@@ -257,8 +279,15 @@ def pay_invoice(invoice_id: int, db: Session = Depends(get_db), user: User = Dep
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
         raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
-    if not _is_manager_or_owner(inv.receiver_farm_id, user, db):
-        raise HTTPException(status_code=403, detail="Nur Empfänger-Manager können bezahlen")
+
+    # For Lohnhof invoices, only sender's manager can mark as paid (self-payment tracking)
+    if inv.receiver_farm_id:
+        if not _is_manager_or_owner(inv.receiver_farm_id, user, db):
+            raise HTTPException(status_code=403, detail="Nur Empfänger-Manager können bezahlen")
+    else:
+        if not _is_manager_or_owner(inv.sender_farm_id, user, db):
+            raise HTTPException(status_code=403, detail="Nur Manager des Ausstellers können Lohnhof-Rechnungen als bezahlt markieren")
+
     if inv.status not in (InvoiceStatus.sent, InvoiceStatus.viewed, InvoiceStatus.overdue):
         raise HTTPException(status_code=400, detail=f"Rechnung kann in Status '{inv.status}' nicht bezahlt werden")
 
@@ -266,8 +295,9 @@ def pay_invoice(invoice_id: int, db: Session = Depends(get_db), user: User = Dep
     inv.paid_date = datetime.utcnow()
     db.commit()
 
-    # Automatically book finance entries on both farms
-    # Sender gets income
+    sender = db.query(Farm).filter(Farm.id == inv.sender_farm_id).first()
+
+    # Sender always gets income entry
     db.add(FinanceEntry(
         farm_id=inv.sender_farm_id,
         type=TransactionType.income,
@@ -278,26 +308,25 @@ def pay_invoice(invoice_id: int, db: Session = Depends(get_db), user: User = Dep
         reference_number=inv.invoice_number,
         created_by=user.id,
     ))
-    # Receiver gets expense
-    db.add(FinanceEntry(
-        farm_id=inv.receiver_farm_id,
-        type=TransactionType.expense,
-        category=FinanceCategory.contract_work,
-        amount=inv.total_gross,
-        description=f"Zahlung Rechnung {inv.invoice_number} an {db.query(Farm).filter(Farm.id==inv.sender_farm_id).first().name}",
-        date=datetime.utcnow(),
-        reference_number=inv.invoice_number,
-        created_by=user.id,
-    ))
-
-    # Update capital balances if they exist
     sender_cap = db.query(FarmCapital).filter(FarmCapital.farm_id == inv.sender_farm_id).first()
     if sender_cap:
         sender_cap.current_balance += inv.total_gross
 
-    receiver_cap = db.query(FarmCapital).filter(FarmCapital.farm_id == inv.receiver_farm_id).first()
-    if receiver_cap:
-        receiver_cap.current_balance -= inv.total_gross
+    # Receiver expense entry only if internal farm
+    if inv.receiver_farm_id:
+        db.add(FinanceEntry(
+            farm_id=inv.receiver_farm_id,
+            type=TransactionType.expense,
+            category=FinanceCategory.contract_work,
+            amount=inv.total_gross,
+            description=f"Zahlung Rechnung {inv.invoice_number} an {sender.name if sender else ''}",
+            date=datetime.utcnow(),
+            reference_number=inv.invoice_number,
+            created_by=user.id,
+        ))
+        receiver_cap = db.query(FarmCapital).filter(FarmCapital.farm_id == inv.receiver_farm_id).first()
+        if receiver_cap:
+            receiver_cap.current_balance -= inv.total_gross
 
     db.commit()
     return {"message": "Rechnung bezahlt", "amount": inv.total_gross}

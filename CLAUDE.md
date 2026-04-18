@@ -25,7 +25,7 @@ Deployment-Typ: Docker Swarm (kein `docker compose up -d` verwenden)
 
 Nach jedem neuen Feature **immer** einen neuen Eintrag in `frontend/src/pages/NewsPage.tsx` hinzufügen:
 - Oben in der `NEWS`-Array einfügen (neueste zuerst)
-- Version hochzählen (aktuell: v1.7)
+- Version hochzählen (aktuell: v1.8)
 - Datum: aktuelles Datum auf Deutsch (z. B. `18. April 2026`)
 - Passendes Icon aus `lucide-react` wählen
 - `tag`: `'Neu'`, `'Feature'`, `'Update'` oder `'Fix'`
@@ -71,7 +71,7 @@ Bei Build- oder Laufzeitfehlern:
 
 ---
 
-## Aktueller Softwarestand (v1.7)
+## Aktueller Softwarestand (v1.8)
 
 ### Öffentliche Seiten (kein Login nötig)
 | Route | Seite |

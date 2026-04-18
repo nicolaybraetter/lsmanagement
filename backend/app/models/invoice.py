@@ -44,7 +44,8 @@ class Invoice(Base):
     id = Column(Integer, primary_key=True, index=True)
     invoice_number = Column(String(30), unique=True, nullable=False)
     sender_farm_id = Column(Integer, ForeignKey("farms.id"), nullable=False)
-    receiver_farm_id = Column(Integer, ForeignKey("farms.id"), nullable=False)
+    receiver_farm_id = Column(Integer, ForeignKey("farms.id"), nullable=True)
+    receiver_lohnhof_id = Column(Integer, ForeignKey("lohnhof_partners.id"), nullable=True)
     status = Column(Enum(InvoiceStatus), default=InvoiceStatus.draft)
     issue_date = Column(DateTime(timezone=True), nullable=False)
     due_date = Column(DateTime(timezone=True), nullable=False)
@@ -59,6 +60,7 @@ class Invoice(Base):
 
     sender_farm = relationship("Farm", foreign_keys=[sender_farm_id])
     receiver_farm = relationship("Farm", foreign_keys=[receiver_farm_id])
+    receiver_lohnhof = relationship("LohnhofPartner", foreign_keys=[receiver_lohnhof_id])
     items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
     creator = relationship("User", foreign_keys=[created_by])
 

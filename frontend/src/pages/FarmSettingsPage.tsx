@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFarmStore } from '../store/farmStore';
 import { useAuthStore } from '../store/authStore';
-import { farmsApi, invoicesApi } from '../services/api';
+import { farmsApi, invoicesApi, lohnhoefeApi } from '../services/api';
 import toast from 'react-hot-toast';
-import { Settings, Wallet, Save, Edit2, LogOut } from 'lucide-react';
+import { Settings, Wallet, Save, Edit2, LogOut, Building2, Plus, Trash2, Phone, User, X, Pencil } from 'lucide-react';
 
 export default function FarmSettingsPage() {
   const navigate = useNavigate();
@@ -19,6 +19,12 @@ export default function FarmSettingsPage() {
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
+  const [lohnhoefe, setLohnhoefe] = useState<any[]>([]);
+  const [lohnhofForm, setLohnhofForm] = useState({ name: '', contact_person: '', phone: '', notes: '' });
+  const [editingLohnhof, setEditingLohnhof] = useState<any | null>(null);
+  const [showLohnhofForm, setShowLohnhofForm] = useState(false);
+  const [savingLohnhof, setSavingLohnhof] = useState(false);
+
   const isOwnerOrManager = currentFarm?.owner_id === user?.id;
 
   useEffect(() => {
@@ -31,8 +37,54 @@ export default function FarmSettingsPage() {
         total_area: String(currentFarm.total_area),
       });
       loadCapital();
+      loadLohnhoefe();
     }
   }, [currentFarm]);
+
+  const loadLohnhoefe = async () => {
+    if (!currentFarm) return;
+    try {
+      const r = await lohnhoefeApi.list(currentFarm.id);
+      setLohnhoefe(r.data);
+    } catch { setLohnhoefe([]); }
+  };
+
+  const saveLohnhof = async () => {
+    if (!currentFarm || !lohnhofForm.name.trim()) return toast.error('Name erforderlich');
+    setSavingLohnhof(true);
+    try {
+      if (editingLohnhof) {
+        await lohnhoefeApi.update(currentFarm.id, editingLohnhof.id, lohnhofForm);
+        toast.success('Lohnhof aktualisiert');
+      } else {
+        await lohnhoefeApi.create(currentFarm.id, lohnhofForm);
+        toast.success('Lohnhof hinzugefügt');
+      }
+      setShowLohnhofForm(false);
+      setEditingLohnhof(null);
+      setLohnhofForm({ name: '', contact_person: '', phone: '', notes: '' });
+      loadLohnhoefe();
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Fehler');
+    } finally { setSavingLohnhof(false); }
+  };
+
+  const deleteLohnhof = async (id: number) => {
+    if (!currentFarm || !confirm('Lohnhof wirklich entfernen?')) return;
+    try {
+      await lohnhoefeApi.delete(currentFarm.id, id);
+      toast.success('Lohnhof entfernt');
+      loadLohnhoefe();
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Fehler');
+    }
+  };
+
+  const startEditLohnhof = (lh: any) => {
+    setEditingLohnhof(lh);
+    setLohnhofForm({ name: lh.name, contact_person: lh.contact_person || '', phone: lh.phone || '', notes: lh.notes || '' });
+    setShowLohnhofForm(true);
+  };
 
   const loadCapital = async () => {
     if (!currentFarm) return;
@@ -205,6 +257,96 @@ export default function FarmSettingsPage() {
 
         {!isOwnerOrManager && (
           <p className="text-sm text-gray-400 mt-2">Nur Eigentümer und Manager können das Startkapital ändern.</p>
+        )}
+      </div>
+
+      {/* Lohnhöfe */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-gray-900 flex items-center gap-2">
+            <Building2 size={16} className="text-orange-500" /> Lohnhöfe
+            <span className="text-xs font-normal text-gray-400">({lohnhoefe.length}/10)</span>
+          </h2>
+          {isOwnerOrManager && lohnhoefe.length < 10 && !showLohnhofForm && (
+            <button onClick={() => { setEditingLohnhof(null); setLohnhofForm({ name: '', contact_person: '', phone: '', notes: '' }); setShowLohnhofForm(true); }}
+              className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
+              <Plus size={14} /> Hinzufügen
+            </button>
+          )}
+        </div>
+
+        <p className="text-xs text-gray-500 mb-4">
+          Vordefinierte Partnerhöfe für die Lohnarbeit. Diese stehen in der Rechnungsverwaltung und Fahrzeugverleihe zur Auswahl.
+        </p>
+
+        {lohnhoefe.length === 0 && !showLohnhofForm && (
+          <div className="text-center py-8 text-gray-400">
+            <Building2 className="mx-auto mb-2 opacity-30" size={36} />
+            <p className="text-sm mb-3">Noch keine Lohnhöfe definiert</p>
+            {isOwnerOrManager && (
+              <button onClick={() => setShowLohnhofForm(true)} className="btn-primary text-sm">Ersten Lohnhof anlegen</button>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-2 mb-4">
+          {lohnhoefe.map((lh: any) => (
+            <div key={lh.id} className="flex items-start justify-between p-3 rounded-xl border border-gray-200 bg-gray-50 hover:border-orange-200 transition">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 text-sm">{lh.name}</p>
+                {(lh.contact_person || lh.phone) && (
+                  <div className="flex items-center gap-3 mt-1">
+                    {lh.contact_person && <span className="flex items-center gap-1 text-xs text-gray-500"><User size={10} />{lh.contact_person}</span>}
+                    {lh.phone && <span className="flex items-center gap-1 text-xs text-gray-500"><Phone size={10} />{lh.phone}</span>}
+                  </div>
+                )}
+                {lh.notes && <p className="text-xs text-gray-400 mt-1 truncate">{lh.notes}</p>}
+              </div>
+              {isOwnerOrManager && (
+                <div className="flex gap-1 ml-3">
+                  <button onClick={() => startEditLohnhof(lh)} className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition"><Pencil size={14} /></button>
+                  <button onClick={() => deleteLohnhof(lh.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"><Trash2 size={14} /></button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {showLohnhofForm && isOwnerOrManager && (
+          <div className="border border-orange-200 rounded-xl p-4 bg-orange-50/30">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-gray-800 text-sm">{editingLohnhof ? 'Lohnhof bearbeiten' : 'Neuer Lohnhof'}</h3>
+              <button onClick={() => { setShowLohnhofForm(false); setEditingLohnhof(null); }} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="label">Hofname *</label>
+                <input className="input" value={lohnhofForm.name} onChange={e => setLohnhofForm({...lohnhofForm, name: e.target.value})} placeholder="z.B. Hof Müller" autoFocus />
+              </div>
+              <div>
+                <label className="label">Ansprechpartner</label>
+                <input className="input" value={lohnhofForm.contact_person} onChange={e => setLohnhofForm({...lohnhofForm, contact_person: e.target.value})} placeholder="Max Müller" />
+              </div>
+              <div>
+                <label className="label">Telefon</label>
+                <input className="input" value={lohnhofForm.phone} onChange={e => setLohnhofForm({...lohnhofForm, phone: e.target.value})} placeholder="+49 123 456789" />
+              </div>
+              <div className="col-span-2">
+                <label className="label">Notizen</label>
+                <input className="input" value={lohnhofForm.notes} onChange={e => setLohnhofForm({...lohnhofForm, notes: e.target.value})} placeholder="Optional" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-3">
+              <button onClick={saveLohnhof} disabled={savingLohnhof || !lohnhofForm.name.trim()} className="btn-primary text-sm flex items-center gap-2 disabled:opacity-50">
+                <Save size={14} /> {savingLohnhof ? 'Speichern...' : editingLohnhof ? 'Aktualisieren' : 'Hinzufügen'}
+              </button>
+              <button onClick={() => { setShowLohnhofForm(false); setEditingLohnhof(null); }} className="btn-secondary text-sm">Abbrechen</button>
+            </div>
+          </div>
+        )}
+
+        {!isOwnerOrManager && (
+          <p className="text-sm text-gray-400 mt-2">Nur Eigentümer und Manager können Lohnhöfe verwalten.</p>
         )}
       </div>
 

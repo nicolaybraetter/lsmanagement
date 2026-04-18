@@ -35,6 +35,7 @@ class Farm(Base):
     stables = relationship("Stable", back_populates="farm")
     biogas_plant = relationship("BiogasPlant", back_populates="farm", uselist=False)
     todo_boards = relationship("TodoBoard", back_populates="farm")
+    lohnhof_partners = relationship("LohnhofPartner", back_populates="farm", cascade="all, delete-orphan")
 
 
 class FarmMember(Base):

@@ -29,7 +29,8 @@ class InvoiceItemOut(BaseModel):
 
 
 class InvoiceCreate(BaseModel):
-    receiver_farm_id: int
+    receiver_farm_id: Optional[int] = None
+    receiver_lohnhof_id: Optional[int] = None
     issue_date: datetime
     due_date: datetime
     tax_rate: float = 19.0
@@ -48,7 +49,8 @@ class InvoiceOut(BaseModel):
     id: int
     invoice_number: str
     sender_farm_id: int
-    receiver_farm_id: int
+    receiver_farm_id: Optional[int] = None
+    receiver_lohnhof_id: Optional[int] = None
     status: InvoiceStatus
     issue_date: datetime
     due_date: datetime
