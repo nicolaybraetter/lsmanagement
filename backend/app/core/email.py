@@ -102,6 +102,28 @@ def send_task_assignment(assignee_email: str, assignee_name: str, assigner_name:
     _send(assignee_email, f"Neue Aufgabe: {task_title}", html)
 
 
+def send_registration_notification(new_username: str, new_email: str):
+    html = f"""
+    <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+      <div style="background:linear-gradient(135deg,#16a34a,#059669);padding:24px;text-align:center;">
+        <div style="font-size:32px;margin-bottom:8px;">&#x1F331;</div>
+        <h1 style="color:#fff;margin:0;font-size:20px;">Neue Registrierung</h1>
+        <p style="color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:14px;">LSManagement</p>
+      </div>
+      <div style="padding:24px;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tr><td style="color:#6b7280;padding:6px 0;width:120px;"><strong>Benutzername</strong></td><td style="color:#111827;">{new_username}</td></tr>
+          <tr><td style="color:#6b7280;padding:6px 0;"><strong>E-Mail</strong></td><td style="color:#111827;">{new_email}</td></tr>
+        </table>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #f3f4f6;text-align:center;">
+        <p style="color:#9ca3af;font-size:12px;margin:0;">Diese E-Mail wurde automatisch von LSManagement gesendet.</p>
+      </div>
+    </div>
+    """
+    _send("nicolay.braetter@googlemail.com", f"[LSManagement] Neue Registrierung: {new_username}", html)
+
+
 def send_support_notification(operator_email: str, category: str, subject: str, message: str, sender_email: str):
     html = f"""
     <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">

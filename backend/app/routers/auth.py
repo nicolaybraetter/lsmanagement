@@ -23,6 +23,13 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    try:
+        from app.core.email import send_registration_notification
+        send_registration_notification(user.username, user.email)
+    except Exception as e:
+        print(f"[AUTH] Registration notification failed: {e}")
+
     token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer", "user": user}
 
