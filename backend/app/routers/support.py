@@ -69,6 +69,22 @@ def create_message(data: SupportCreate, db: Session = Depends(get_db)):
     db.add(msg)
     db.commit()
     db.refresh(msg)
+
+    # Send email notification to operator
+    try:
+        from app.core.email import send_support_notification
+        from app.core.config import settings
+        if settings.OPERATOR_EMAIL:
+            send_support_notification(
+                operator_email=settings.OPERATOR_EMAIL,
+                category=data.category,
+                subject=data.subject,
+                message=data.message,
+                sender_email=data.email,
+            )
+    except Exception as e:
+        print(f"[SUPPORT] Email notification failed: {e}")
+
     return msg
 
 
