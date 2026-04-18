@@ -63,9 +63,19 @@ def list_users(db: Session = Depends(get_db), _=Depends(verify_admin_token)):
 
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db), _=Depends(verify_admin_token)):
+    from app.models.farm import FarmMember
+    from app.models.invitation import FarmInvitation
+    from app.models.todo import TodoTask
+
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Benutzer nicht gefunden")
+    db.query(FarmMember).filter(FarmMember.user_id == user_id).delete()
+    db.query(FarmInvitation).filter(
+        (FarmInvitation.invitee_id == user_id) | (FarmInvitation.inviter_id == user_id)
+    ).delete()
+    db.query(TodoTask).filter(TodoTask.assignee_id == user_id).update({"assignee_id": None})
+    db.query(TodoTask).filter(TodoTask.creator_id == user_id).update({"creator_id": None})
     db.delete(user)
     db.commit()
     return {"ok": True}

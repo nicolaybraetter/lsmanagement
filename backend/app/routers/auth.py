@@ -52,6 +52,22 @@ def update_profile(update: UserUpdate, db: Session = Depends(get_db), current_us
 
 @router.delete("/me")
 def delete_account(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from app.models.farm import FarmMember
+    from app.models.invitation import FarmInvitation
+    from app.models.todo import TodoTask
+
+    user_id = current_user.id
+
+    # Remove farm memberships
+    db.query(FarmMember).filter(FarmMember.user_id == user_id).delete()
+    # Remove invitations (sent and received)
+    db.query(FarmInvitation).filter(
+        (FarmInvitation.invitee_id == user_id) | (FarmInvitation.inviter_id == user_id)
+    ).delete()
+    # Unassign todos
+    db.query(TodoTask).filter(TodoTask.assignee_id == user_id).update({"assignee_id": None})
+    db.query(TodoTask).filter(TodoTask.creator_id == user_id).update({"creator_id": None})
+
     db.delete(current_user)
     db.commit()
     return {"message": "Konto gelöscht"}
