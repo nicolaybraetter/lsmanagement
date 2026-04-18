@@ -240,6 +240,7 @@ export default function LandingPage() {
               <Link to="/news" className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors">
                 <Newspaper className="w-3.5 h-3.5" /> Neuigkeiten
               </Link>
+              <Link to="/hilfe" className="text-gray-400 hover:text-white text-sm transition-colors">Hilfe</Link>
               <Link to="/supportbox" className="text-gray-400 hover:text-white text-sm transition-colors">Supportbox</Link>
               <Link to="/wuensche" className="text-gray-400 hover:text-white text-sm transition-colors">W&#xFC;nsche</Link>
               <Link to="/register" className="text-gray-400 hover:text-white text-sm transition-colors">Registrieren</Link>

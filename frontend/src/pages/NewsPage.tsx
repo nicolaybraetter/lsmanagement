@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Tractor, ArrowLeft, Sprout, Wrench, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare } from 'lucide-react';
+import { Tractor, ArrowLeft, Sprout, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare, HelpCircle } from 'lucide-react';
 
 interface NewsEntry {
   date: string;
@@ -14,6 +14,23 @@ interface NewsEntry {
 }
 
 const NEWS: NewsEntry[] = [
+  {
+    date: '18. April 2026',
+    version: 'v1.7',
+    title: 'Öffentliche Hilfe- & Anleitungsseite',
+    tag: 'Neu',
+    tagColor: 'bg-green-100 text-green-700 border-green-200',
+    icon: HelpCircle,
+    iconBg: 'bg-green-500',
+    items: [
+      'Neue öffentliche Seite „Hilfe & Anleitung" unter /hilfe',
+      'Vollständige Bedienungsanleitung für alle 12 Module des Systems',
+      'Aufklappbare Abschnitte: Erste Schritte, Maschinen, Felder, Finanzen, Lager, Tiere, Biogas, Scrum-Board, Mitglieder, Rechnungen, Benachrichtigungen, Profil und Supportbox',
+      'Volltextsuche über alle Hilfethemen',
+      'Schnellzugriff auf Supportbox, Wünsche & Anregungen und Neuigkeiten',
+      'Seite in Navbar, Footer und Sitemap verlinkt',
+    ],
+  },
   {
     date: '18. April 2026',
     version: 'v1.6',

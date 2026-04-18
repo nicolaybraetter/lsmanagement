@@ -22,6 +22,7 @@ import FarmSettingsPage from './pages/FarmSettingsPage';
 import PriceListPage from './pages/PriceListPage';
 import SupportboxPage from './pages/SupportboxPage';
 import WuenschePage from './pages/WuenschePage';
+import HelpPage from './pages/HelpPage';
 import NewsPage from './pages/NewsPage';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminPanel from './pages/admin/AdminPanel';
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/supportbox" element={<SupportboxPage />} />
         <Route path="/wuensche" element={<WuenschePage />} />
+        <Route path="/hilfe" element={<HelpPage />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
