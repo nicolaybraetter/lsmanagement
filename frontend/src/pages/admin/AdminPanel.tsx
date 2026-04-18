@@ -18,6 +18,12 @@ interface AdminUser {
   full_name: string | null;
   is_active: boolean;
   created_at: string | null;
+  last_seen: string | null;
+}
+
+function isOnline(last_seen: string | null): boolean {
+  if (!last_seen) return false;
+  return (Date.now() - new Date(last_seen).getTime()) < 5 * 60 * 1000;
 }
 
 interface EmailConfig {
@@ -305,6 +311,7 @@ export default function AdminPanel() {
                       <th className="text-left px-6 py-3">E-Mail</th>
                       <th className="text-left px-6 py-3">Name</th>
                       <th className="text-left px-6 py-3">Erstellt</th>
+                      <th className="text-left px-6 py-3">Online</th>
                       <th className="text-left px-6 py-3">Status</th>
                       <th className="text-right px-6 py-3">Aktionen</th>
                     </tr>
@@ -318,6 +325,14 @@ export default function AdminPanel() {
                         <td className="px-6 py-3 text-gray-400">{u.full_name || '—'}</td>
                         <td className="px-6 py-3 text-gray-500 text-xs">
                           {u.created_at ? new Date(u.created_at).toLocaleDateString('de-DE') : '—'}
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isOnline(u.last_seen) ? 'bg-green-400 shadow-[0_0_6px_#4ade80]' : 'bg-gray-600'}`} />
+                            <span className={`text-xs font-medium ${isOnline(u.last_seen) ? 'text-green-400' : 'text-gray-500'}`}>
+                              {isOnline(u.last_seen) ? 'Online' : u.last_seen ? 'Offline' : 'Nie'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-3">
                           <button
@@ -363,7 +378,7 @@ export default function AdminPanel() {
                     ))}
                     {users.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="text-center text-gray-500 py-12">Keine Benutzer gefunden</td>
+                        <td colSpan={8} className="text-center text-gray-500 py-12">Keine Benutzer gefunden</td>
                       </tr>
                     )}
                   </tbody>

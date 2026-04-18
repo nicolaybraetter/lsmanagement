@@ -1,9 +1,19 @@
+import { useEffect } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { authApi } from '../../services/api';
 import Sidebar from './Sidebar';
 
 export default function DashboardLayout() {
   const { isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    authApi.heartbeat().catch(() => {});
+    const interval = setInterval(() => authApi.heartbeat().catch(() => {}), 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
+
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   return (

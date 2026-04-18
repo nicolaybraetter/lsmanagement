@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserOut, Token, LoginRequest, UserUpdate
@@ -46,6 +47,13 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/heartbeat")
+def heartbeat(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    current_user.last_seen = func.now()
+    db.commit()
+    return {"ok": True}
 
 
 @router.put("/me", response_model=UserOut)

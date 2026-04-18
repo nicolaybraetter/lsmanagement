@@ -45,6 +45,7 @@ def _migrate_columns():
         ("machines", "is_sold",           "BOOLEAN DEFAULT 0"),
         ("machines", "sale_price",        "FLOAT DEFAULT 0"),
         ("machines", "sold_at",           "DATETIME"),
+        ("users",    "last_seen",         "DATETIME"),
     ]
     with engine.connect() as conn:
         for table, col, col_type in migrations:

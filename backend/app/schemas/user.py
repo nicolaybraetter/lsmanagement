@@ -25,6 +25,7 @@ class UserOut(BaseModel):
     bio: Optional[str]
     is_active: bool
     created_at: datetime
+    last_seen: Optional[datetime] = None
 
     class Config:
         from_attributes = True
