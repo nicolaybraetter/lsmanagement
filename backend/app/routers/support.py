@@ -57,12 +57,12 @@ def create_message(data: SupportCreate, db: Session = Depends(get_db)):
     _check_content(data.subject)
     _check_content(data.message)
 
-    # Rate limit: max 3 messages per email
+    # Rate limit: max 20 messages per email (erhöht für Testphase)
     count = db.query(SupportMessage).filter(SupportMessage.email == data.email).count()
-    if count >= 3:
+    if count >= 20:
         raise HTTPException(
             status_code=429,
-            detail="Du hast bereits 3 Nachrichten gesendet. Bitte warte auf eine Antwort."
+            detail="Du hast bereits 20 Nachrichten gesendet. Bitte warte auf eine Antwort."
         )
 
     msg = SupportMessage(**data.model_dump())

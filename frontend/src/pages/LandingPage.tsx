@@ -234,7 +234,7 @@ export default function LandingPage() {
               <Link to="/supportbox" className="text-gray-400 hover:text-white text-sm transition-colors">Supportbox</Link>
               <Link to="/register" className="text-gray-400 hover:text-white text-sm transition-colors">Registrieren</Link>
             </div>
-            <p className="text-gray-500 text-sm">© 2026 LSManagement · Für LS22 & LS25</p>
+            <p className="text-gray-500 text-sm">© 2026 Nicolay Brätter · LSManagement · Für LS22 & LS25</p>
           </div>
         </div>
       </footer>

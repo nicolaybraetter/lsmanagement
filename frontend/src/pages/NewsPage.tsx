@@ -172,6 +172,8 @@ export default function NewsPage() {
             Jetzt kostenlos starten
           </Link>
         </div>
+
+        <p className="text-center text-gray-400 text-sm mt-8">© 2026 Nicolay Brätter · LSManagement · Für LS22 & LS25</p>
       </div>
     </div>
   );
