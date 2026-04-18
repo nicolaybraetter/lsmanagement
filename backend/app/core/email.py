@@ -102,7 +102,7 @@ def send_task_assignment(assignee_email: str, assignee_name: str, assigner_name:
     _send(assignee_email, f"Neue Aufgabe: {task_title}", html)
 
 
-(operator_email: str, category: str, subject: str, message: str, sender_email: str):
+def send_support_notification(operator_email: str, category: str, subject: str, message: str, sender_email: str):
     html = f"""
     <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
       <div style="background:linear-gradient(135deg,#16a34a,#059669);padding:24px;text-align:center;">
