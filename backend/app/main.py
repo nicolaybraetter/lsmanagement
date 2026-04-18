@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.database import create_tables, engine
-from app.routers import auth, farms, machines, fields, finances, storage, animals, biogas, todos, invoices, support, admin
+from app.routers import auth, farms, machines, fields, finances, storage, animals, biogas, todos, invoices, support, admin, crop_plans
 
 app = FastAPI(
     title="LS Management API",
@@ -78,6 +78,7 @@ app.include_router(todos.router)
 app.include_router(invoices.router)
 app.include_router(support.router)
 app.include_router(admin.router)
+app.include_router(crop_plans.router)
 
 
 @app.get("/")

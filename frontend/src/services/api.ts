@@ -154,6 +154,13 @@ export const supportApi = {
   markReviewed: (id: number) => api.patch(`/api/support/${id}/review`),
 };
 
+// Crop Rotation Plans
+export const cropPlansApi = {
+  list: (farmId: number) => api.get(`/api/farms/${farmId}/crop-plans`),
+  create: (farmId: number, data: any) => api.post(`/api/farms/${farmId}/crop-plans`, data),
+  delete: (farmId: number, planId: number) => api.delete(`/api/farms/${farmId}/crop-plans/${planId}`),
+};
+
 // Todos
 export const todosApi = {
   listBoards: (farmId: number) => api.get(`/api/farms/${farmId}/todos/boards`),

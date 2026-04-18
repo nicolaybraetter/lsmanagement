@@ -5,7 +5,8 @@ import toast from 'react-hot-toast';
 import { MapPin, Plus, Edit2, Trash2, X } from 'lucide-react';
 
 const STATUSES = ['Brache','vorbereitet','gesät','wächst','gedüngt','erntereif','geerntet'];
-const CROPS = ['Gras','Mais','Weizen','Gerste','Raps','Zuckerrübe','Kartoffel','Zwiebel','Roggen','Hafer','Sonnenblume','Sorghum','Silomais','Klee','Triticale','Sonstiges'];
+const CROPS_LS22 = ['Gras','Klee','Silomais','Mais','Weizen','Gerste','Hafer','Roggen','Triticale','Sorghum','Raps','Sonnenblume','Soja','Zuckerrübe','Kartoffel','Zwiebel','Karotten','Pastinaken','Rote Bete','Baumwolle','Zuckerrohr','Weintrauben','Oliven','Pappel','Ölrettich','Sonstiges'];
+const CROPS_LS25_EXTRA = ['Spinat','Erbsen','Grüne Bohnen','Reis','Langkornreis'];
 const STATUS_COLORS: Record<string, string> = {
   'Brache': 'bg-gray-100 text-gray-600 border-gray-200',
   'vorbereitet': 'bg-amber-100 text-amber-700 border-amber-200',
@@ -15,7 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
   'erntereif': 'bg-yellow-100 text-yellow-700 border-yellow-200',
   'geerntet': 'bg-orange-100 text-orange-700 border-orange-200',
 };
-const CROP_EMOJIS: Record<string, string> = { 'Gras':'🌿','Mais':'🌽','Weizen':'🌾','Gerste':'🌾','Raps':'🌻','Zuckerrübe':'🌱','Kartoffel':'🥔','Zwiebel':'🧅','Roggen':'🌾','Hafer':'🌾','Sonnenblume':'🌻','Sorghum':'🌿','Silomais':'🌽','Klee':'🍀','Triticale':'🌾','Sonstiges':'🌱' };
+const CROP_EMOJIS: Record<string, string> = { 'Gras':'🌿','Klee':'🍀','Silomais':'🌽','Mais':'🌽','Weizen':'🌾','Gerste':'🌾','Hafer':'🌾','Roggen':'🌾','Triticale':'🌾','Sorghum':'🌿','Raps':'🌼','Sonnenblume':'🌻','Soja':'🫘','Zuckerrübe':'🌱','Kartoffel':'🥔','Zwiebel':'🧅','Karotten':'🥕','Pastinaken':'🥕','Rote Bete':'🌱','Baumwolle':'🌸','Zuckerrohr':'🎋','Weintrauben':'🍇','Oliven':'🫒','Pappel':'🌳','Ölrettich':'🌱','Spinat':'🥬','Erbsen':'🫛','Grüne Bohnen':'🫘','Reis':'🌾','Langkornreis':'🌾','Sonstiges':'🌱' };
 
 const EMPTY = { field_number: '', name: '', area_ha: '', status: 'Brache', current_crop: '', soil_type: '', location_notes: '', is_owned: true, purchase_price: '', lease_price_per_ha: '' };
 
@@ -102,7 +103,7 @@ export default function FieldsPage() {
                 <div><label className="label">Name</label><input className="input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nordfeld" /></div>
                 <div><label className="label">Fläche (ha) *</label><input className="input" type="number" step="0.01" value={form.area_ha} onChange={e => setForm({...form, area_ha: e.target.value})} /></div>
                 <div><label className="label">Status</label><select className="input" value={form.status} onChange={e => setForm({...form, status: e.target.value})}>{STATUSES.map(s => <option key={s}>{s}</option>)}</select></div>
-                <div><label className="label">Aktuelle Frucht</label><select className="input" value={form.current_crop} onChange={e => setForm({...form, current_crop: e.target.value})}><option value="">—</option>{CROPS.map(c => <option key={c}>{c}</option>)}</select></div>
+                <div><label className="label">Aktuelle Frucht</label><select className="input" value={form.current_crop} onChange={e => setForm({...form, current_crop: e.target.value})}><option value="">—</option><optgroup label="LS22 &amp; LS25">{CROPS_LS22.map(c => <option key={c} value={c}>{CROP_EMOJIS[c]||'🌱'} {c}</option>)}</optgroup><optgroup label="Neu in LS25">{CROPS_LS25_EXTRA.map(c => <option key={c} value={c}>{CROP_EMOJIS[c]||'🌱'} {c}</option>)}</optgroup></select></div>
                 <div><label className="label">Bodenart</label><input className="input" value={form.soil_type} onChange={e => setForm({...form, soil_type: e.target.value})} placeholder="Lehm, Sand..." /></div>
               </div>
               <div className="flex items-center gap-2"><input type="checkbox" id="owned" checked={form.is_owned} onChange={e => setForm({...form, is_owned: e.target.checked})} className="rounded" /><label htmlFor="owned" className="text-sm font-medium">Eigentum (sonst Pacht)</label></div>

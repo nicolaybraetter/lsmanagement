@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import {
   Tractor, MapPin, TrendingUp, Package, PawPrint, Flame,
   CheckSquare, Users, ArrowRight, Star, Shield, Zap, RotateCcw,
-  ChevronRight
+  ChevronRight, Newspaper
 } from 'lucide-react';
 
 const features = [
@@ -170,17 +170,22 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-8">
-              <h3 className="font-bold text-gray-900 text-xl mb-4">Typische Kulturen für Friesland</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-gray-900 text-xl">31 Fruchtsorten</h3>
+                <span className="text-xs bg-green-600 text-white font-semibold px-2.5 py-1 rounded-full">LS22 & LS25</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
                 {[
-                  { emoji: '🌿', name: 'Gras & Grünland' },
-                  { emoji: '🌽', name: 'Silomais' },
-                  { emoji: '🌾', name: 'Winterweizen' },
-                  { emoji: '🫛', name: 'Winterraps' },
+                  { emoji: '🌿', name: 'Gras & Klee' },
+                  { emoji: '🌽', name: 'Mais & Silomais' },
+                  { emoji: '🌾', name: 'Weizen, Gerste, Hafer' },
+                  { emoji: '🌼', name: 'Raps & Soja' },
                   { emoji: '🥔', name: 'Kartoffeln' },
                   { emoji: '🌱', name: 'Zuckerrüben' },
-                  { emoji: '🌾', name: 'Wintergerste' },
-                  { emoji: '🧅', name: 'Zwiebeln' },
+                  { emoji: '🥕', name: 'Karotten & Pastinaken' },
+                  { emoji: '🍇', name: 'Weintrauben & Oliven' },
+                  { emoji: '🥬', name: 'Spinat (LS25 neu)' },
+                  { emoji: '🫛', name: 'Erbsen (LS25 neu)' },
                 ].map((crop) => (
                   <div key={crop.name} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 text-sm font-medium text-gray-700 shadow-sm">
                     <span>{crop.emoji}</span>
@@ -188,6 +193,9 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
+              <Link to="/news" className="mt-4 inline-flex items-center gap-1.5 text-green-700 hover:text-green-800 text-xs font-semibold transition-colors">
+                <Newspaper className="w-3.5 h-3.5" /> Alle Neuigkeiten ansehen →
+              </Link>
             </div>
           </div>
         </div>
@@ -212,14 +220,21 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="bg-gray-900 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                 <Tractor className="w-4 h-4 text-white" />
               </div>
               <span className="text-white font-bold">LSManagement</span>
             </div>
-            <p className="text-gray-500 text-sm">© 2024 LSManagement · Für LS22 & LS25</p>
+            <div className="flex items-center gap-6">
+              <Link to="/news" className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors">
+                <Newspaper className="w-3.5 h-3.5" /> Neuigkeiten
+              </Link>
+              <Link to="/supportbox" className="text-gray-400 hover:text-white text-sm transition-colors">Supportbox</Link>
+              <Link to="/register" className="text-gray-400 hover:text-white text-sm transition-colors">Registrieren</Link>
+            </div>
+            <p className="text-gray-500 text-sm">© 2026 LSManagement · Für LS22 & LS25</p>
           </div>
         </div>
       </footer>
