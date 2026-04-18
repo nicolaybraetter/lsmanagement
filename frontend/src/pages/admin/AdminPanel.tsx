@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { adminApi } from '../../services/api';
+import { adminApi, supportApi } from '../../services/api';
 import {
   Shield, Users, Mail, LogOut, Trash2, KeyRound, UserCog,
   ToggleLeft, ToggleRight, Loader2, Check, X, Eye, EyeOff, Save, RefreshCw,
+  MessageSquare, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-type Tab = 'users' | 'email';
+type Tab = 'users' | 'email' | 'wishes';
 
 interface AdminUser {
   id: number;
@@ -25,6 +26,25 @@ interface EmailConfig {
   smtp_password: string;
   smtp_from: string;
   operator_email: string;
+}
+
+interface WishComment {
+  id: number;
+  message_id: number;
+  author_email: string;
+  text: string;
+  created_at: string;
+}
+
+interface WishEntry {
+  id: number;
+  email: string;
+  category: string;
+  subject: string;
+  message: string;
+  is_reviewed: boolean;
+  created_at: string;
+  comments: WishComment[];
 }
 
 // ── tiny modal helper ──────────────────────────────────────────
@@ -62,6 +82,9 @@ export default function AdminPanel() {
   const [credUsername, setCredUsername] = useState('');
   const [credEmail, setCredEmail] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [wishes, setWishes] = useState<WishEntry[]>([]);
+  const [wishesLoading, setWishesLoading] = useState(false);
+  const [expandedWish, setExpandedWish] = useState<number | null>(null);
 
   // guard: redirect if no token
   useEffect(() => {
@@ -72,6 +95,7 @@ export default function AdminPanel() {
   useEffect(() => {
     if (tab === 'users') loadUsers();
     if (tab === 'email') loadEmailConfig();
+    if (tab === 'wishes') loadWishes();
   }, [tab]);
 
   const loadUsers = async () => {
@@ -96,6 +120,40 @@ export default function AdminPanel() {
       if (e.response?.status === 401) logout();
     } finally {
       setEmailLoading(false);
+    }
+  };
+
+  const loadWishes = async () => {
+    setWishesLoading(true);
+    try {
+      const res = await supportApi.listPublic();
+      setWishes(res.data);
+    } catch {
+      toast.error('Fehler beim Laden der Wünsche');
+    } finally {
+      setWishesLoading(false);
+    }
+  };
+
+  const handleDeleteMessage = async (id: number) => {
+    if (!confirm('Diesen Eintrag unwiderruflich löschen?')) return;
+    try {
+      await adminApi.deleteMessage(id);
+      setWishes(w => w.filter(x => x.id !== id));
+      toast.success('Eintrag gelöscht');
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Fehler');
+    }
+  };
+
+  const handleDeleteComment = async (msgId: number, commentId: number) => {
+    if (!confirm('Diesen Kommentar löschen?')) return;
+    try {
+      await adminApi.deleteComment(commentId);
+      setWishes(w => w.map(x => x.id === msgId ? { ...x, comments: x.comments.filter(c => c.id !== commentId) } : x));
+      toast.success('Kommentar gelöscht');
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Fehler');
     }
   };
 
@@ -212,9 +270,10 @@ export default function AdminPanel() {
 
       <div className="max-w-6xl mx-auto p-6">
         {/* Tab bar */}
-        <div className="flex gap-2 mb-6 bg-gray-900 border border-gray-800 rounded-2xl p-1.5 w-fit">
+        <div className="flex gap-2 mb-6 bg-gray-900 border border-gray-800 rounded-2xl p-1.5 w-fit flex-wrap">
           {tabBtn('users', <Users size={16} />, 'Benutzer')}
           {tabBtn('email', <Mail size={16} />, 'E-Mail Konfiguration')}
+          {tabBtn('wishes', <MessageSquare size={16} />, 'W&#xFC;nsche & Anregungen')}
         </div>
 
         {/* ── USERS TAB ── */}
@@ -304,6 +363,88 @@ export default function AdminPanel() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── WISHES TAB ── */}
+        {tab === 'wishes' && (
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+              <h2 className="font-semibold text-white">W&#xFC;nsche &amp; Anregungen</h2>
+              <button onClick={loadWishes} className="text-gray-400 hover:text-green-400 transition" title="Aktualisieren">
+                <RefreshCw size={16} />
+              </button>
+            </div>
+
+            {wishesLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-6 h-6 animate-spin text-green-500" />
+              </div>
+            ) : wishes.length === 0 ? (
+              <div className="text-center text-gray-500 py-12">Keine Eintr&#xE4;ge vorhanden</div>
+            ) : (
+              <div className="divide-y divide-gray-800">
+                {wishes.map(w => (
+                  <div key={w.id} className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="text-xs bg-gray-800 text-gray-300 rounded-full px-2.5 py-0.5 font-medium">{w.category}</span>
+                          {w.is_reviewed && <span className="text-xs bg-green-900/50 text-green-400 rounded-full px-2.5 py-0.5">Gepr&#xFC;ft</span>}
+                          <span className="text-xs text-gray-500 ml-auto">{new Date(w.created_at).toLocaleDateString('de-DE')}</span>
+                        </div>
+                        <p className="font-semibold text-white text-sm">{w.subject}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{w.email}</p>
+                        {expandedWish === w.id && (
+                          <p className="text-sm text-gray-300 mt-2 whitespace-pre-wrap leading-relaxed">{w.message}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => setExpandedWish(expandedWish === w.id ? null : w.id)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition"
+                          title="Details anzeigen"
+                        >
+                          {expandedWish === w.id ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMessage(w.id)}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-900/30 transition"
+                          title="Eintrag l&#xF6;schen"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Comments */}
+                    {expandedWish === w.id && w.comments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">{w.comments.length} Kommentar{w.comments.length !== 1 ? 'e' : ''}</p>
+                        {w.comments.map(c => (
+                          <div key={c.id} className="flex items-start justify-between gap-3 bg-gray-800 rounded-xl p-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs text-gray-400">{c.author_email}</span>
+                                <span className="text-xs text-gray-600">{new Date(c.created_at).toLocaleDateString('de-DE')}</span>
+                              </div>
+                              <p className="text-sm text-gray-300 whitespace-pre-wrap">{c.text}</p>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteComment(w.id, c.id)}
+                              className="p-1 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-900/30 transition flex-shrink-0"
+                              title="Kommentar l&#xF6;schen"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>

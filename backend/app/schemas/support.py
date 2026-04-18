@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime
+from typing import List
 
 
 class SupportCreate(BaseModel):
@@ -35,6 +36,30 @@ class SupportCreate(BaseModel):
         return v.strip()
 
 
+class CommentCreate(BaseModel):
+    author_email: EmailStr
+    text: str
+
+    @field_validator('text')
+    @classmethod
+    def validate_text(cls, v):
+        if len(v.strip()) < 5:
+            raise ValueError('Kommentar muss mindestens 5 Zeichen lang sein')
+        if len(v) > 1000:
+            raise ValueError('Kommentar darf maximal 1000 Zeichen lang sein')
+        return v.strip()
+
+
+class CommentOut(BaseModel):
+    id: int
+    message_id: int
+    author_email: str
+    text: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class SupportOut(BaseModel):
     id: int
     email: str
@@ -43,5 +68,6 @@ class SupportOut(BaseModel):
     message: str
     is_reviewed: bool
     created_at: datetime
+    comments: List[CommentOut] = []
 
     model_config = {"from_attributes": True}

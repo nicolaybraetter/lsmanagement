@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Tractor, ArrowLeft, Sprout, Wrench, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell } from 'lucide-react';
+import { Tractor, ArrowLeft, Sprout, Wrench, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare } from 'lucide-react';
 
 interface NewsEntry {
   date: string;
@@ -13,6 +13,23 @@ interface NewsEntry {
 }
 
 const NEWS: NewsEntry[] = [
+  {
+    date: '18. April 2026',
+    version: 'v1.6',
+    title: 'Öffentliche Wünsche & Anregungen',
+    tag: 'Neu',
+    tagColor: 'bg-teal-100 text-teal-700 border-teal-200',
+    icon: MessageSquare,
+    iconBg: 'bg-teal-500',
+    items: [
+      'Neue öffentliche Seite „Wünsche & Anregungen" — alle Einreichungen sind für jeden sichtbar',
+      'Einträge werden nach Datum absteigend sortiert (neueste zuerst)',
+      'Jeder kann Einträge kommentieren — eine gültige E-Mail-Adresse ist erforderlich',
+      'E-Mail-Adressen werden automatisch maskiert angezeigt (Datenschutz)',
+      'Inhaltsfilter: URLs und anstößige Ausdrücke werden blockiert',
+      'Admin-Panel: neuer Tab zum Löschen von Einträgen oder einzelnen Kommentaren',
+    ],
+  },
   {
     date: '18. April 2026',
     version: 'v1.5',

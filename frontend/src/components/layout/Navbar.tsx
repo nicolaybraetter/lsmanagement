@@ -112,6 +112,7 @@ export default function Navbar() {
                 <a href="#features" className={`text-sm font-medium hover:text-green-500 transition-colors ${isLanding ? 'text-white/90' : 'text-gray-600'}`}>Features</a>
                 <a href="#about" className={`text-sm font-medium hover:text-green-500 transition-colors ${isLanding ? 'text-white/90' : 'text-gray-600'}`}>Über uns</a>
                 <Link to="/news" className={`text-sm font-medium hover:text-green-500 transition-colors ${isLanding ? 'text-white/90' : 'text-gray-600'}`}>Neuigkeiten</Link>
+                <Link to="/wuensche" className={`text-sm font-medium hover:text-green-500 transition-colors ${isLanding ? 'text-white/90' : 'text-gray-600'}`}>W&#xFC;nsche</Link>
                 <Link to="/supportbox" className={`text-sm font-medium hover:text-green-500 transition-colors ${isLanding ? 'text-white/90' : 'text-gray-600'}`}>Supportbox</Link>
                 <Link to="/login" className={`text-sm font-medium hover:text-green-500 transition-colors ${isLanding ? 'text-white/90' : 'text-gray-600'}`}>Anmelden</Link>
                 <Link to="/register" className="btn-primary text-sm py-2 px-5">Kostenlos starten</Link>
@@ -294,6 +295,7 @@ export default function Navbar() {
         <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
           <div className="px-4 py-3 space-y-1">
             <Link to="/news" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-gray-700 font-medium hover:bg-gray-50">Neuigkeiten</Link>
+            <Link to="/wuensche" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-gray-700 font-medium hover:bg-gray-50">W&#xFC;nsche &amp; Anregungen</Link>
             <Link to="/supportbox" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-gray-700 font-medium hover:bg-gray-50">Supportbox</Link>
             <Link to="/login" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-gray-700 font-medium hover:bg-gray-50">Anmelden</Link>
             <Link to="/register" onClick={() => setMenuOpen(false)} className="block py-2.5 px-3 rounded-lg text-green-600 font-medium hover:bg-green-50">Kostenlos starten</Link>

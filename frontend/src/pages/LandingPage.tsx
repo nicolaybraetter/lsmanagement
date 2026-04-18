@@ -232,6 +232,7 @@ export default function LandingPage() {
                 <Newspaper className="w-3.5 h-3.5" /> Neuigkeiten
               </Link>
               <Link to="/supportbox" className="text-gray-400 hover:text-white text-sm transition-colors">Supportbox</Link>
+              <Link to="/wuensche" className="text-gray-400 hover:text-white text-sm transition-colors">W&#xFC;nsche</Link>
               <Link to="/register" className="text-gray-400 hover:text-white text-sm transition-colors">Registrieren</Link>
             </div>
             <p className="text-gray-500 text-sm">© 2026 Nicolay Brätter · LSManagement · Für LS22 & LS25</p>

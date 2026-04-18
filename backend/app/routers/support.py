@@ -3,9 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db
-from app.models.support import SupportMessage
-from app.schemas.support import SupportCreate, SupportOut
-from app.core.security import get_current_user
+from app.models.support import SupportMessage, SupportComment
+from app.schemas.support import SupportCreate, SupportOut, CommentCreate, CommentOut
+from app.core.security import get_current_user, verify_admin_token
 from app.models.user import User
 
 router = APIRouter(prefix="/api/support", tags=["support"])
@@ -88,6 +88,38 @@ def create_message(data: SupportCreate, db: Session = Depends(get_db)):
     return msg
 
 
+@router.get("/public", response_model=List[SupportOut])
+def list_public(db: Session = Depends(get_db)):
+    return db.query(SupportMessage).order_by(SupportMessage.created_at.desc()).all()
+
+
+@router.post("/{msg_id}/comments", response_model=CommentOut, status_code=201)
+def post_comment(msg_id: int, data: CommentCreate, db: Session = Depends(get_db)):
+    msg = db.query(SupportMessage).filter(SupportMessage.id == msg_id).first()
+    if not msg:
+        raise HTTPException(status_code=404, detail="Nachricht nicht gefunden")
+
+    _check_content(data.text)
+
+    # Rate limit: max 10 comments per email per message
+    count = db.query(SupportComment).filter(
+        SupportComment.message_id == msg_id,
+        SupportComment.author_email == str(data.author_email)
+    ).count()
+    if count >= 10:
+        raise HTTPException(status_code=429, detail="Du hast bereits 10 Kommentare zu diesem Eintrag gesendet.")
+
+    comment = SupportComment(
+        message_id=msg_id,
+        author_email=str(data.author_email),
+        text=data.text,
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return comment
+
+
 @router.get("", response_model=List[SupportOut])
 def list_messages(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     return db.query(SupportMessage).order_by(SupportMessage.created_at.desc()).all()
@@ -99,5 +131,25 @@ def mark_reviewed(msg_id: int, db: Session = Depends(get_db), user: User = Depen
     if not msg:
         raise HTTPException(status_code=404, detail="Nachricht nicht gefunden")
     msg.is_reviewed = True
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/comments/{comment_id}", dependencies=[Depends(verify_admin_token)])
+def admin_delete_comment(comment_id: int, db: Session = Depends(get_db)):
+    comment = db.query(SupportComment).filter(SupportComment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Kommentar nicht gefunden")
+    db.delete(comment)
+    db.commit()
+    return {"ok": True}
+
+
+@router.delete("/{msg_id}", dependencies=[Depends(verify_admin_token)])
+def admin_delete_message(msg_id: int, db: Session = Depends(get_db)):
+    msg = db.query(SupportMessage).filter(SupportMessage.id == msg_id).first()
+    if not msg:
+        raise HTTPException(status_code=404, detail="Nachricht nicht gefunden")
+    db.delete(msg)
     db.commit()
     return {"ok": True}

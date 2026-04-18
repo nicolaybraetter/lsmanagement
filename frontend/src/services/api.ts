@@ -145,6 +145,8 @@ export const adminApi = {
   toggleActive: (id: number) => adminAxios.put(`/api/admin/users/${id}/toggle-active`),
   getEmailConfig: () => adminAxios.get('/api/admin/email-config'),
   updateEmailConfig: (data: any) => adminAxios.put('/api/admin/email-config', data),
+  deleteMessage: (id: number) => adminAxios.delete(`/api/support/${id}`),
+  deleteComment: (id: number) => adminAxios.delete(`/api/support/comments/${id}`),
 };
 
 // Support
@@ -152,6 +154,8 @@ export const supportApi = {
   submit: (data: any) => api.post('/api/support', data),
   list: () => api.get('/api/support'),
   markReviewed: (id: number) => api.patch(`/api/support/${id}/review`),
+  listPublic: () => api.get('/api/support/public'),
+  postComment: (id: number, data: any) => api.post(`/api/support/${id}/comments`, data),
 };
 
 // Notifications
