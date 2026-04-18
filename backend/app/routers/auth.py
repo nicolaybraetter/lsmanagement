@@ -40,18 +40,22 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == credentials.username).first()
     if not user or not verify_password(credentials.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Ungültige Anmeldedaten")
+    user.last_seen = datetime.utcnow()
+    db.commit()
     token = create_access_token({"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer", "user": user}
 
 
 @router.get("/me", response_model=UserOut)
-def get_me(current_user: User = Depends(get_current_user)):
+def get_me(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    current_user.last_seen = datetime.utcnow()
+    db.commit()
     return current_user
 
 
 @router.post("/heartbeat")
 def heartbeat(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    current_user.last_seen = datetime.now(timezone.utc)
+    current_user.last_seen = datetime.utcnow()
     db.commit()
     return {"ok": True}
 

@@ -55,8 +55,8 @@ def list_users(db: Session = Depends(get_db), _=Depends(verify_admin_token)):
             "email": u.email,
             "full_name": u.full_name,
             "is_active": u.is_active,
-            "created_at": u.created_at.isoformat() if u.created_at else None,
-            "last_seen": u.last_seen.isoformat() if u.last_seen else None,
+            "created_at": u.created_at.strftime('%Y-%m-%dT%H:%M:%SZ') if u.created_at else None,
+            "last_seen": u.last_seen.strftime('%Y-%m-%dT%H:%M:%SZ') if u.last_seen else None,
         }
         for u in users
     ]
