@@ -27,7 +27,14 @@ export default function DashboardHome() {
   useEffect(() => {
     farmsApi.list().then(r => {
       setFarms(r.data);
-      if (!currentFarm && r.data.length > 0) setCurrentFarm(r.data[0]);
+      const stillMember = r.data.find((f: any) => f.id === currentFarm?.id);
+      if (stillMember) {
+        setCurrentFarm(stillMember);
+      } else if (r.data.length > 0) {
+        setCurrentFarm(r.data[0]);
+      } else {
+        setCurrentFarm(null);
+      }
     });
     loadInvitations();
   }, []);

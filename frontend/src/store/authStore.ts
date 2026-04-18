@@ -24,16 +24,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   })(),
   token: localStorage.getItem('token'),
   isAuthenticated: !!localStorage.getItem('token'),
-  setAuth: (user, token) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
-    set({ user, token, isAuthenticated: true });
-  },
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('currentFarmId');
+    localStorage.removeItem('currentFarm');
     set({ user: null, token: null, isAuthenticated: false });
+  },
+  setAuth: (user, token) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.removeItem('currentFarm');
+    set({ user, token, isAuthenticated: true });
   },
   updateUser: (user) => {
     localStorage.setItem('user', JSON.stringify(user));
