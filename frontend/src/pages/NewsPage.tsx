@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Tractor, ArrowLeft, Sprout, Wrench, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star } from 'lucide-react';
+import { Tractor, ArrowLeft, Sprout, Wrench, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell } from 'lucide-react';
 
 interface NewsEntry {
   date: string;
@@ -13,6 +13,23 @@ interface NewsEntry {
 }
 
 const NEWS: NewsEntry[] = [
+  {
+    date: '18. April 2026',
+    version: 'v1.5',
+    title: 'Hofinternes Benachrichtigungssystem',
+    tag: 'Neu',
+    tagColor: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    icon: Bell,
+    iconBg: 'bg-indigo-500',
+    items: [
+      'Benachrichtigungsglocke in der Navigation mit rotem Zähler für ungelesene Meldungen',
+      'Beim Zuweisen einer Aufgabe erhält das Mitglied sofort eine Systemnachricht',
+      'Gleichzeitig wird eine E-Mail mit allen Aufgabendetails versandt',
+      'Benachrichtigungen einzeln oder alle auf einmal als gelesen markieren',
+      'Klick auf eine Benachrichtigung leitet direkt zum Scrum-Board weiter',
+      'Automatische Aktualisierung alle 30 Sekunden im Hintergrund',
+    ],
+  },
   {
     date: '18. April 2026',
     version: 'v1.4',
