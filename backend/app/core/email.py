@@ -70,7 +70,39 @@ def send_farm_invitation(invitee_email: str, invitee_name: str, inviter_name: st
     _send(invitee_email, f"Einladung: {farm_name}", html)
 
 
-def send_support_notification(operator_email: str, category: str, subject: str, message: str, sender_email: str):
+def send_task_assignment(assignee_email: str, assignee_name: str, assigner_name: str,
+                         farm_name: str, task_title: str, board_name: str):
+    html = f"""
+    <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
+      <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:32px 24px;text-align:center;">
+        <div style="font-size:32px;margin-bottom:8px;">&#x1F4CB;</div>
+        <h1 style="color:#fff;margin:0;font-size:22px;">Neue Aufgabe zugewiesen</h1>
+        <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">LSManagement &middot; {farm_name}</p>
+      </div>
+      <div style="padding:28px 24px;">
+        <p style="color:#374151;font-size:16px;">Hallo <strong>{assignee_name}</strong>,</p>
+        <p style="color:#6b7280;line-height:1.6;">
+          <strong>{assigner_name}</strong> hat dir eine Aufgabe im Board <strong>{board_name}</strong> zugewiesen.
+        </p>
+        <div style="background:#f5f3ff;border-radius:10px;padding:16px;margin:20px 0;border:1px solid #ede9fe;">
+          <p style="margin:0;color:#374151;font-size:15px;font-weight:600;">&#x1F4CB; {task_title}</p>
+          <p style="margin:6px 0 0;color:#6b7280;font-size:13px;"><strong>Board:</strong> {board_name}</p>
+          <p style="margin:4px 0 0;color:#6b7280;font-size:13px;"><strong>Hof:</strong> {farm_name}</p>
+          <p style="margin:4px 0 0;color:#6b7280;font-size:13px;"><strong>Zugewiesen von:</strong> {assigner_name}</p>
+        </div>
+        <p style="color:#6b7280;line-height:1.6;">
+          Melde dich in LSManagement an, um die Aufgabe einzusehen und zu bearbeiten.
+        </p>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #f3f4f6;text-align:center;">
+        <p style="color:#9ca3af;font-size:12px;margin:0;">Diese E-Mail wurde automatisch von LSManagement gesendet.</p>
+      </div>
+    </div>
+    """
+    _send(assignee_email, f"Neue Aufgabe: {task_title}", html)
+
+
+(operator_email: str, category: str, subject: str, message: str, sender_email: str):
     html = f"""
     <div style="font-family:Inter,Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
       <div style="background:linear-gradient(135deg,#16a34a,#059669);padding:24px;text-align:center;">

@@ -154,6 +154,15 @@ export const supportApi = {
   markReviewed: (id: number) => api.patch(`/api/support/${id}/review`),
 };
 
+// Notifications
+export const notificationsApi = {
+  list: () => api.get('/api/notifications'),
+  unreadCount: () => api.get('/api/notifications/unread-count'),
+  markRead: (id: number) => api.patch(`/api/notifications/${id}/read`),
+  markAllRead: () => api.patch('/api/notifications/read-all'),
+  delete: (id: number) => api.delete(`/api/notifications/${id}`),
+};
+
 // Crop Rotation Plans
 export const cropPlansApi = {
   list: (farmId: number) => api.get(`/api/farms/${farmId}/crop-plans`),
