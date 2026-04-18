@@ -13,20 +13,20 @@
 
 - [Übersicht](#übersicht)
 - [Features](#features)
+- [Öffentliche Seiten](#öffentliche-seiten)
 - [Technologie-Stack](#technologie-stack)
 - [Schnellstart](#schnellstart)
 - [Projektstruktur](#projektstruktur)
 - [API-Endpunkte](#api-endpunkte)
 - [Konfiguration](#konfiguration)
 - [Docker-Deployment](#docker-deployment)
+- [Changelog](#changelog)
 
 ---
 
 ## Übersicht
 
-**LSManagement** ist eine vollständige Web-Applikation zur Verwaltung landwirtschaftlicher Betriebe im Farming Simulator 22 und 25. Sie ist speziell auf die Bedürfnisse norddeutscher Betriebe in **Friesland und Ostfriesland** ausgerichtet.
-
-Die App unterstützt **Multiplayer-Betrieb**: Ein Farmmanager legt den Hof an und lädt andere Spieler als Manager, Mitarbeiter oder Beobachter ein. Alle Beteiligten sehen denselben Datenstand.
+**LSManagement** ist eine vollständige Web-Applikation zur Verwaltung landwirtschaftlicher Betriebe im Farming Simulator 22 und 25. Die App unterstützt **Multiplayer-Betrieb**: Ein Farmmanager legt den Hof an und lädt andere Spieler als Manager, Mitarbeiter oder Beobachter ein.
 
 ---
 
@@ -41,12 +41,13 @@ Die App unterstützt **Multiplayer-Betrieb**: Ein Farmmanager legt den Hof an un
 - Konto vollständig aus dem Profil heraus löschen
 - Eingeschränkte Sidebar für Benutzer ohne Hof-Zugehörigkeit
 
-### 🛡️ Superadmin-Panel (`/admin`)
-- Passwortgeschütztes Admin-Interface
-- Benutzerliste mit Status, Erstellungsdatum und E-Mail
-- Passwort zurücksetzen, Benutzernamen/E-Mail ändern
-- Konto aktivieren / deaktivieren / löschen
-- SMTP-E-Mail-Konfiguration direkt im Panel änderbar (ohne Neustart)
+### 🔔 Hofinternes Benachrichtigungssystem
+- Benachrichtigungsglocke in der Navigation mit rotem Zähler für ungelesene Meldungen
+- Beim Zuweisen einer Aufgabe erhält das Mitglied sofort eine Systemnachricht
+- Gleichzeitig wird eine E-Mail mit allen Aufgabendetails versandt
+- Benachrichtigungen einzeln oder alle auf einmal als gelesen markieren
+- Klick auf eine Benachrichtigung leitet direkt zum Scrum-Board weiter
+- Automatische Aktualisierung alle 30 Sekunden im Hintergrund
 
 ### 🏡 Hofverwaltung
 - Hof mit Name, Beschreibung, Standort/Map und Spielversion (LS22/LS25) anlegen
@@ -63,7 +64,6 @@ Die App unterstützt **Multiplayer-Betrieb**: Ein Farmmanager legt den Hof an un
 ### 🌾 Feldverwaltung
 - Felder mit Nummer, Name, Fläche (ha), Status und Bodenart anlegen
 - Eigentum oder Pacht (mit Pachtpreis pro ha)
-- Kaufpreis wird automatisch als Ausgabe in die Finanzen gebucht
 - Status-Workflow: Brache → Vorbereitet → Gesät → Wächst → Gedüngt → Erntereif → Geerntet
 
 ### 🔄 Fruchtfolgeplanung
@@ -79,67 +79,51 @@ Die App unterstützt **Multiplayer-Betrieb**: Ein Farmmanager legt den Hof an un
 | Sonderkulturen | Baumwolle, Zuckerrohr, Weintrauben, Oliven, Pappel, Ölrettich |
 | Neu in LS25 | Spinat, Erbsen, Grüne Bohnen, Reis, Langkornreis |
 
-**Vordefinierte Fruchtfolgen für Friesland:**
-- Friesland Standard: Mais → Weizen → Gerste → Raps
-- Grünlandbasiert (Milchvieh): Gras → Gras → Silomais → Roggen
-- Intensiv-Ackerbau: Weizen → Zuckerrübe → Gerste → Raps → Weizen
-- Kartoffelbetrieb: Kartoffel → Weizen → Mais → Gerste
-
-**Eigene Fruchtfolgen-Pläne:**
-- Pro Hof individuelle Fruchtfolgen erstellen und speichern
-- Visueller Sequenz-Builder (Früchte einzeln hinzufügen/entfernen)
-- Spielversion (LS22 / LS25 / Beide) pro Plan wählbar
-
-Feldbezogene Einträge: Jahr, Aussaatdatum, Erntedatum, Ertrag (t), Düngung, Notizen.
+**Vordefinierte Fruchtfolgen für Friesland** sowie **eigene Fruchtfolgen-Pläne** pro Hof erstellbar.
 
 ### 💰 Finanzverwaltung
-- Vollständiges Ein- und Ausgabenmanagement mit Jahresfilter (2022–2026)
-- Kategorien: Maschinenkauf, Kraftstoff, Saatgut, Düngemittel, Ernteverlauf, Pacht, Subventionen u.v.m.
+- Vollständiges Ein- und Ausgabenmanagement mit Jahresfilter
 - Echtzeit-Bilanz: Einnahmen − Ausgaben = Saldo
 - Automatische Buchung bei Rechnungszahlungen und Maschinenverkäufen
 
 ### 🧾 Rechnungsverwaltung
-Höfe können sich gegenseitig Rechnungen für Lohn- und Maschinenverleiharbeiten stellen.
-
-**Workflow:**
-```
-Entwurf → Gestellt → Gesehen → Bezahlt
-               ↓
-          Storniert
-```
-
-- Rechnung mit mehreren Positionen (Leistungsart, Feldnummer, Menge, Preis)
-- Automatische Rechnungsnummer (`RE-{HofID}-{Jahr}-{Nr.}`)
-- MwSt.-Sätze: 19 %, 7 %, 0 %
-- Bei Zahlung: automatische Finanzbuchung und Guthabenaktualisierung beider Höfe
-
-### 📋 Preisliste Lohnarbeiten & Verleih
-Aktuelle Maschinenring-Preisempfehlungen für Nord- und Ostfriesland (2023/2024).
+Höfe können sich gegenseitig Rechnungen stellen. Workflow: `Entwurf → Gestellt → Bezahlt / Storniert`
 
 ### 📦 Lagerverwaltung
-Kategorien: Betriebsstoffe, Saatgut, Dünger, Pflanzenschutz, Futter (Heu, Stroh, Silagen), Getreideernte.  
-Features: Lagerort, Kapazität, Mindestbestand-Warnung, Ein-/Ausgangsbuchungen mit Geschichte.
+Kategorien: Betriebsstoffe, Saatgut, Dünger, Futter, Getreideernte. Ein-/Ausgangsbuchungen mit Historie.
 
 ### 🐄 Tierverwaltung
-Stalltypen: Kuh, Schwein, Schaf, Huhn, Pferd, Gemischt.  
-Pro Tier: Ohrmarke, Geburtsdatum, Gewicht, Kaufpreis, Milchleistung, Futterbedarf.
+Ställe und Tiere (Kuh, Schwein, Schaf, Huhn, Pferd) mit detaillierten Profilen.
 
 ### ⚡ Biogasanlage
 Anlagenparameter, Substrat-Einspeisung, Gasertrag, Monatliche Übersicht, Wartungsprotokoll.
 
 ### ✅ Aufgaben-Scrum-Board
-5-Spalten-Kanban (Backlog → Todo → In Bearbeitung → Überprüfung → Erledigt).  
-Prioritäten, Kategorien, Zuweisung, Fälligkeitsdatum, Drag & Drop.  
-12 landwirtschaftliche Aufgaben-Vorlagen werden beim Hofanlegen automatisch erstellt.
+5-Spalten-Kanban (Backlog → Todo → In Bearbeitung → Überprüfung → Erledigt).
+Prioritäten, Kategorien, Zuweisung, Fälligkeitsdatum, Drag & Drop.
 
-### 📬 Supportbox
-Öffentliches Kontaktformular (ohne Login nutzbar).  
-Kategorien: Funktionswunsch, Fehlermeldung, Allgemeines Feedback, Sonstiges.  
-Automatische E-Mail-Benachrichtigung an den Betreiber.  
-Spam-Schutz: URL-Filter, Wortfilter, Rate-Limit pro E-Mail-Adresse.
+### 📬 Supportbox & Wünsche & Anregungen
+- Öffentliches Kontaktformular (ohne Login nutzbar)
+- Kategorien: Funktionswunsch, Fehlermeldung, Allgemeines Feedback, Sonstiges
+- **Öffentliche Wunschseite** (`/wuensche`): alle Einreichungen öffentlich lesbar, nach Datum sortiert
+- **Kommentarfunktion**: jeder kann mit gültiger E-Mail-Adresse kommentieren
+- E-Mail-Adressen werden automatisch maskiert angezeigt
+- Spam-Schutz: URL-Filter, Wortfilter, Rate-Limit
 
-### 📰 Neuigkeiten-Seite (`/news`)
-Öffentlich zugängliche Changelog-Seite mit datierten Einträgen — für alle Besucher sichtbar, auch ohne Account.
+---
+
+## Öffentliche Seiten
+
+Folgende Seiten sind ohne Login erreichbar:
+
+| Route | Inhalt |
+|-------|--------|
+| `/` | Landing Page mit Feature-Übersicht |
+| `/news` | Neuigkeiten & Changelog |
+| `/wuensche` | Community-Wünsche & Anregungen |
+| `/supportbox` | Kontakt & Feedback |
+| `/hilfe` | Vollständige Hilfe & Anleitung |
+| `/register` | Kostenlos registrieren |
 
 ---
 
@@ -150,10 +134,9 @@ Spam-Schutz: URL-Filter, Wortfilter, Rate-Limit pro E-Mail-Adresse.
 |-----------|-------------|
 | Framework | FastAPI 0.104 |
 | ORM | SQLAlchemy 2.0 |
-| Datenbank | SQLite (Dev) |
+| Datenbank | SQLite |
 | Auth | python-jose (JWT) + passlib (bcrypt) |
 | Validierung | Pydantic v2 |
-| Server | Uvicorn |
 | E-Mail | smtplib — SSL (Port 465) & STARTTLS (Port 587) |
 
 ### Frontend
@@ -164,6 +147,7 @@ Spam-Schutz: URL-Filter, Wortfilter, Rate-Limit pro E-Mail-Adresse.
 | Styling | Tailwind CSS 3 |
 | Routing | React Router 7 |
 | State | Zustand 5 |
+| SEO | react-helmet-async |
 | HTTP | Axios |
 | Icons | Lucide React |
 | Formulare | React Hook Form + Zod |
@@ -177,27 +161,21 @@ Spam-Schutz: URL-Filter, Wortfilter, Rate-Limit pro E-Mail-Adresse.
 - Node.js 20+
 
 ### 1. Repository klonen
-
 ```bash
 git clone https://github.com/nicolaybraetter/lsmanagement.git
 cd lsmanagement
 ```
 
 ### 2. Backend starten
-
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-API erreichbar unter `http://localhost:8000`  
-Swagger-Docs: `http://localhost:8000/docs`
-
 ### 3. Frontend starten
-
 ```bash
 cd frontend
 npm install
@@ -215,56 +193,63 @@ lsmanagement/
 ├── backend/
 │   ├── app/
 │   │   ├── core/
-│   │   │   ├── config.py           # Einstellungen (SECRET_KEY, SMTP etc.)
-│   │   │   ├── security.py         # JWT, Passwort-Hashing, Admin-Token
-│   │   │   └── email.py            # E-Mail-Versand (SSL + STARTTLS)
+│   │   │   ├── config.py
+│   │   │   ├── security.py
+│   │   │   └── email.py
 │   │   ├── models/
 │   │   │   ├── user.py
-│   │   │   ├── farm.py             # Hof + Mitglieder + Rollen
-│   │   │   ├── machine.py          # Maschinen + Verleih/Verkauf
-│   │   │   ├── field.py            # Felder + Fruchtfolge + eigene Pläne
+│   │   │   ├── farm.py
+│   │   │   ├── machine.py
+│   │   │   ├── field.py            # 31 Fruchtsorten + eigene Pläne
 │   │   │   ├── finance.py
 │   │   │   ├── storage.py
 │   │   │   ├── animal.py
 │   │   │   ├── biogas.py
 │   │   │   ├── todo.py
-│   │   │   ├── invoice.py          # Rechnungen + Startkapital
+│   │   │   ├── invoice.py
 │   │   │   ├── invitation.py
-│   │   │   ├── support.py
-│   │   │   └── system_config.py    # Laufzeit-Konfiguration (DB-backed)
+│   │   │   ├── support.py          # SupportMessage + SupportComment
+│   │   │   ├── notification.py
+│   │   │   └── system_config.py
 │   │   ├── routers/
-│   │   │   ├── auth.py             # Register, Login, Profil, Kontolöschung
-│   │   │   ├── farms.py            # Höfe, Mitglieder, Einladungen
-│   │   │   ├── machines.py         # Fuhrpark, Leihen, Verkaufen, Vermietung
-│   │   │   ├── fields.py           # Felder + Fruchtfolge-Historie
-│   │   │   ├── crop_plans.py       # Eigene Fruchtfolgen-Pläne
+│   │   │   ├── auth.py
+│   │   │   ├── farms.py
+│   │   │   ├── machines.py
+│   │   │   ├── fields.py
+│   │   │   ├── crop_plans.py
 │   │   │   ├── finances.py
 │   │   │   ├── storage.py
 │   │   │   ├── animals.py
 │   │   │   ├── biogas.py
 │   │   │   ├── todos.py
 │   │   │   ├── invoices.py
-│   │   │   ├── support.py          # Supportbox + E-Mail-Benachrichtigung
-│   │   │   └── admin.py            # Superadmin-Panel
+│   │   │   ├── support.py
+│   │   │   ├── notifications.py
+│   │   │   └── admin.py
 │   │   ├── schemas/
 │   │   ├── database.py
 │   │   └── main.py
-│   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
+│   ├── public/
+│   │   ├── robots.txt
+│   │   └── sitemap.xml
 │   ├── src/
 │   │   ├── components/layout/
-│   │   │   ├── Navbar.tsx
+│   │   │   ├── Navbar.tsx          # Benachrichtigungsglocke
 │   │   │   ├── Sidebar.tsx
 │   │   │   └── DashboardLayout.tsx
 │   │   ├── pages/
 │   │   │   ├── LandingPage.tsx
-│   │   │   ├── NewsPage.tsx        # Öffentliche Changelog-Seite
+│   │   │   ├── NewsPage.tsx
+│   │   │   ├── WuenschePage.tsx
+│   │   │   ├── SupportboxPage.tsx
+│   │   │   ├── HelpPage.tsx
 │   │   │   ├── auth/
 │   │   │   ├── DashboardHome.tsx
 │   │   │   ├── MachinesPage.tsx
 │   │   │   ├── FieldsPage.tsx
-│   │   │   ├── CropRotationPage.tsx # Fruchtfolgen + eigene Pläne
+│   │   │   ├── CropRotationPage.tsx
 │   │   │   ├── FinancesPage.tsx
 │   │   │   ├── StoragePage.tsx
 │   │   │   ├── AnimalsPage.tsx
@@ -274,16 +259,19 @@ lsmanagement/
 │   │   │   ├── InvoicesPage.tsx
 │   │   │   ├── FarmSettingsPage.tsx
 │   │   │   ├── PriceListPage.tsx
-│   │   │   ├── ProfilePage.tsx
-│   │   │   ├── SupportboxPage.tsx
-│   │   │   └── admin/
-│   │   │       ├── AdminLogin.tsx
-│   │   │       └── AdminPanel.tsx
-│   │   ├── services/api.ts
+│   │   │   └── ProfilePage.tsx
 │   │   ├── store/
+│   │   │   ├── authStore.ts
+│   │   │   ├── farmStore.ts
+│   │   │   ├── sidebarStore.ts
+│   │   │   └── notificationStore.ts
+│   │   ├── services/api.ts
 │   │   └── App.tsx
+│   ├── nginx.conf
 │   └── Dockerfile
+├── docker-compose.yml
 ├── docker-compose.portainer.yml
+├── CLAUDE.md
 └── README.md
 ```
 
@@ -299,32 +287,22 @@ lsmanagement/
 | DELETE | `/api/auth/me` | Konto löschen |
 | GET/POST | `/api/farms` | Höfe |
 | POST | `/api/farms/{id}/members/invite` | Mitglied einladen |
-| DELETE | `/api/farms/{id}/members/{uid}` | Mitglied entfernen / Hof verlassen |
 | GET/POST | `/api/farms/{id}/machines` | Fuhrpark |
 | POST | `/api/farms/{id}/machines/{id}/lend` | Maschine verleihen |
-| POST | `/api/farms/{id}/machines/{id}/unlend` | Leihe beenden |
 | POST | `/api/farms/{id}/machines/{id}/sell` | Maschine verkaufen |
 | GET/POST | `/api/farms/{id}/fields` | Felder |
-| GET/POST | `/api/farms/{id}/fields/{id}/crop-rotation` | Fruchtfolge-Historie |
-| GET/POST | `/api/farms/{id}/crop-plans` | Eigene Fruchtfolgen-Pläne |
-| DELETE | `/api/farms/{id}/crop-plans/{id}` | Plan löschen |
+| GET/POST | `/api/farms/{id}/crop-plans` | Fruchtfolgen-Pläne |
 | GET/POST | `/api/farms/{id}/finances` | Finanzen |
-| GET | `/api/farms/{id}/finances/summary` | Bilanz |
 | GET/POST | `/api/farms/{id}/storage` | Lager |
 | GET/POST | `/api/farms/{id}/animals/stables` | Ställe |
 | GET/POST | `/api/farms/{id}/biogas` | Biogasanlage |
-| GET/POST | `/api/farms/{id}/todos/boards` | Boards |
 | GET/POST/PUT/DELETE | `/api/farms/{id}/todos/boards/{id}/tasks` | Aufgaben |
-| GET/PUT | `/api/invoices/capital/{farm_id}` | Startkapital |
-| POST | `/api/invoices/from-farm/{farm_id}` | Rechnung erstellen |
-| POST | `/api/invoices/{id}/send` | Rechnung stellen |
-| POST | `/api/invoices/{id}/pay` | Rechnung bezahlen |
-| POST | `/api/support` | Supportbox-Nachricht senden |
-| POST | `/api/admin/auth` | Admin-Login |
-| GET | `/api/admin/users` | Alle Benutzer (Admin) |
-| DELETE | `/api/admin/users/{id}` | Benutzer löschen (Admin) |
-| PUT | `/api/admin/users/{id}/password` | Passwort zurücksetzen (Admin) |
-| GET/PUT | `/api/admin/email-config` | SMTP-Konfiguration (Admin) |
+| GET/POST | `/api/invoices` | Rechnungen |
+| GET | `/api/notifications` | Benachrichtigungen |
+| PATCH | `/api/notifications/read-all` | Alle als gelesen markieren |
+| GET | `/api/support/public` | Öffentliche Wünsche (kein Auth) |
+| POST | `/api/support` | Nachricht senden |
+| POST | `/api/support/{id}/comments` | Kommentar hinzufügen |
 
 ---
 
@@ -336,8 +314,6 @@ lsmanagement/
 SECRET_KEY=dein-geheimes-schluessel-hier
 DATABASE_URL=sqlite:///./lsmanagement.db
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
-
-# Superadmin
 ADMIN_PASSWORD=sicheres-passwort
 
 # E-Mail / SMTP
@@ -349,31 +325,20 @@ SMTP_FROM=noreply@example.com
 OPERATOR_EMAIL=admin@example.com
 ```
 
-> SMTP-Einstellungen können auch zur Laufzeit über das Admin-Panel geändert werden — ohne Neustart des Backends.
+> SMTP-Einstellungen können auch zur Laufzeit im Admin-Panel geändert werden — ohne Neustart.
 
 ---
 
 ## Docker-Deployment (Docker Swarm / Portainer)
 
 ```bash
-# Images bauen
-docker build --no-cache -t lsmanagement-backend ./backend
-docker build --no-cache -t lsmanagement-frontend ./frontend
+# 1. SSH: Code holen & Images bauen
+cd ~/lsmanagement
+git pull origin claude/farm-management-system-6KPmN
+docker compose build --no-cache
 
-# Services aktualisieren
-docker service update --force --image lsmanagement-backend lsmanagement_backend
-docker service update --force --image lsmanagement-frontend lsmanagement_frontend
-```
-
-Oder alles auf einmal nach einem `git pull`:
-
-```bash
-cd /home/user/lsmanagement && \
-git pull origin claude/farm-management-system-6KPmN && \
-docker build --no-cache -t lsmanagement-backend ./backend && \
-docker service update --force --image lsmanagement-backend lsmanagement_backend && \
-docker build --no-cache -t lsmanagement-frontend ./frontend && \
-docker service update --force --image lsmanagement-frontend lsmanagement_frontend
+# 2. Stack aktualisieren
+docker stack deploy -c docker-compose.portainer.yml lsmanagement
 ```
 
 ---
@@ -382,17 +347,14 @@ docker service update --force --image lsmanagement-frontend lsmanagement_fronten
 
 | Version | Datum | Highlights |
 |---------|-------|-----------|
+| v1.7 | Apr 2026 | Öffentliche Hilfeseite `/hilfe`, SEO-Optimierung (robots.txt, sitemap.xml, react-helmet-async), Sicherheits-Header (CSP, X-Frame-Options), Registrierungs-E-Mail an Betreiber |
+| v1.6 | Apr 2026 | Öffentliche Wünsche & Anregungen (`/wuensche`) mit Kommentarfunktion, Admin-Moderation für Einträge und Kommentare |
+| v1.5 | Apr 2026 | Hofinternes Benachrichtigungssystem (Bell-Icon, Echtzeit-Polling, E-Mail bei Aufgabenzuweisung) |
 | v1.4 | Apr 2026 | 31 LS22/LS25-Fruchtsorten, eigene Fruchtfolgen-Pläne, E-Mail-Fix (SSL/STARTTLS), Neuigkeiten-Seite |
-| v1.3 | Apr 2026 | Kontolöschung aus Profil, Hof verlassen, sichere Kaskadenlöschung |
+| v1.3 | Apr 2026 | Kontolöschung, Hof verlassen, sichere Kaskadenlöschung |
 | v1.2 | Apr 2026 | Fuhrparkverwaltung (Kaufen/Leihen/Verkaufen), Startkapital-Sync |
-| v1.1 | Apr 2026 | Superadmin-Panel, Benutzerrollen, E-Mail-Benachrichtigungen |
+| v1.1 | Apr 2026 | Benutzerrollen, E-Mail-Benachrichtigungen, Einladungssystem |
 | v1.0 | Apr 2026 | Launch — alle Kernmodule |
-
----
-
-## Lizenz
-
-MIT License — Details siehe [LICENSE](LICENSE).
 
 ---
 
