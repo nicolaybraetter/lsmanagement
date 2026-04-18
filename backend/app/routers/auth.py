@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
+from datetime import datetime, timezone
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserOut, Token, LoginRequest, UserUpdate
@@ -51,7 +51,7 @@ def get_me(current_user: User = Depends(get_current_user)):
 
 @router.post("/heartbeat")
 def heartbeat(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    current_user.last_seen = func.now()
+    current_user.last_seen = datetime.now(timezone.utc)
     db.commit()
     return {"ok": True}
 

@@ -98,11 +98,18 @@ export default function AdminPanel() {
     if (!localStorage.getItem('admin_token')) navigate('/admin');
   }, []);
 
-  // load users when tab = users
+  // load data when tab changes
   useEffect(() => {
     if (tab === 'users') loadUsers();
     if (tab === 'email') loadEmailConfig();
     if (tab === 'wishes') loadWishes();
+  }, [tab]);
+
+  // auto-refresh user list every 15s to keep online status current
+  useEffect(() => {
+    if (tab !== 'users') return;
+    const interval = setInterval(loadUsers, 15000);
+    return () => clearInterval(interval);
   }, [tab]);
 
   const loadUsers = async () => {
