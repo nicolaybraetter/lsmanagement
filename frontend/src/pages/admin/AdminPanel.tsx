@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { adminApi, supportApi } from '../../services/api';
 import {
   Shield, Users, Mail, LogOut, Trash2, KeyRound, UserCog,
@@ -249,6 +250,10 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+        <title>Admin Panel – LSManagement</title>
+      </Helmet>
       {/* Header */}
       <header className="bg-gray-900 border-b border-gray-800 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
