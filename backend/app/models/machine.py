@@ -56,7 +56,6 @@ class Machine(Base):
     is_available_for_rental = Column(Boolean, default=False)
     # Lending
     lent_to_farm_id = Column(Integer, ForeignKey("farms.id"), nullable=True)
-    lent_to_lohnhof_id = Column(Integer, ForeignKey("lohnhof_partners.id"), nullable=True)
     # Sale
     is_sold = Column(Boolean, default=False)
     sale_price = Column(Float, default=0)
@@ -66,7 +65,6 @@ class Machine(Base):
 
     farm = relationship("Farm", back_populates="machines", foreign_keys=[farm_id])
     lent_to_farm = relationship("Farm", foreign_keys=[lent_to_farm_id])
-    lent_to_lohnhof = relationship("LohnhofPartner", foreign_keys=[lent_to_lohnhof_id])
     rentals = relationship("MachineRental", back_populates="machine")
 
 

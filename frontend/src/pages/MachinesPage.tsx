@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useFarmStore } from '../store/farmStore';
-import { machinesApi, lohnhoefeApi } from '../services/api';
+import { machinesApi } from '../services/api';
 import {
   Tractor, Plus, Trash2, X, ArrowLeftRight, ShoppingCart,
   CheckCircle2, Circle, Wrench, AlertCircle, BadgeCheck,
@@ -100,23 +100,16 @@ export default function MachinesPage() {
   const [lendFarmId, setLendFarmId] = useState('');
   const [salePrice, setSalePrice] = useState('');
   const [saving, setSaving] = useState(false);
-  const [lohnhoefe, setLohnhoefe] = useState<any[]>([]);
 
   const otherFarms: Farm[] = farms.filter((f: any) => f.id !== currentFarm?.id);
 
-  useEffect(() => { if (currentFarm) { load(); loadLohnhoefe(); } }, [currentFarm]);
+  useEffect(() => { if (currentFarm) load(); }, [currentFarm]);
 
   const load = async () => {
     if (!currentFarm) return;
     setLoading(true);
     try { const r = await machinesApi.list(currentFarm.id); setMachines(r.data); }
     finally { setLoading(false); }
-  };
-
-  const loadLohnhoefe = async () => {
-    if (!currentFarm) return;
-    try { const r = await lohnhoefeApi.list(currentFarm.id); setLohnhoefe(r.data); }
-    catch { setLohnhoefe([]); }
   };
 
   const handleBuy = async () => {
@@ -138,13 +131,7 @@ export default function MachinesPage() {
     if (!currentFarm || !lendTarget || !lendFarmId) return toast.error('Bitte einen Hof auswählen');
     setSaving(true);
     try {
-      const [type, id] = lendFarmId.split(':');
-      let r;
-      if (type === 'lohnhof') {
-        r = await machinesApi.lendLohnhof(currentFarm.id, lendTarget.id, parseInt(id));
-      } else {
-        r = await machinesApi.lend(currentFarm.id, lendTarget.id, parseInt(id));
-      }
+      const r = await machinesApi.lend(currentFarm.id, lendTarget.id, parseInt(lendFarmId));
       setMachines(ms => ms.map(m => m.id === lendTarget.id ? r.data : m));
       toast.success(`Fahrzeug an „${r.data.lent_to_farm_name}" verliehen`);
       setLendTarget(null); setLendFarmId('');
@@ -432,25 +419,16 @@ export default function MachinesPage() {
         <Modal title={`Verleihen: ${lendTarget.name}`} onClose={() => setLendTarget(null)}>
           <div className="space-y-4">
             <p className="text-sm text-gray-500">An welchen Hof soll das Fahrzeug verliehen werden?</p>
-            {otherFarms.length === 0 && lohnhoefe.length === 0 ? (
+            {otherFarms.length === 0 ? (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
-                Keine Zielhöfe verfügbar. Lege unter Hofeinstellungen Lohnhöfe an oder tritt einem weiteren Hof bei.
+                Du bist nur Mitglied dieses Hofes. Tritt einem weiteren Hof bei um Fahrzeuge dorthin verleihen zu können.
               </div>
             ) : (
               <Field label="Zielhof">
                 <div className="relative">
                   <select value={lendFarmId} onChange={e => setLendFarmId(e.target.value)} className={sel}>
                     <option value="">— Hof auswählen —</option>
-                    {lohnhoefe.length > 0 && (
-                      <optgroup label="Lohnhöfe (vordefiniert)">
-                        {lohnhoefe.map((lh: any) => <option key={`lohnhof:${lh.id}`} value={`lohnhof:${lh.id}`}>{lh.name}</option>)}
-                      </optgroup>
-                    )}
-                    {otherFarms.length > 0 && (
-                      <optgroup label="Eigene Höfe">
-                        {otherFarms.map((f: any) => <option key={`farm:${f.id}`} value={`farm:${f.id}`}>{f.name} ({f.game_version})</option>)}
-                      </optgroup>
-                    )}
+                    {otherFarms.map((f: any) => <option key={f.id} value={f.id}>{f.name} ({f.game_version})</option>)}
                   </select>
                   <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>

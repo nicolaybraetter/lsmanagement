@@ -16,23 +16,6 @@ interface NewsEntry {
 const NEWS: NewsEntry[] = [
   {
     date: '18. April 2026',
-    version: 'v1.8',
-    title: 'Lohnhöfe — Vordefinierte Partnerbetriebe',
-    tag: 'Neu',
-    tagColor: 'bg-orange-100 text-orange-700 border-orange-200',
-    icon: Tractor,
-    iconBg: 'bg-orange-500',
-    items: [
-      'Bis zu 10 Lohnhöfe (Partnerbetriebe) pro Hof vordefinieren — direkt in den Hofeinstellungen',
-      'Felder: Hofname, Ansprechpartner, Telefonnummer und optionale Notizen',
-      'Vordefinierte Lohnhöfe stehen im Rechnungswesen als Empfänger zur Auswahl',
-      'Vordefinierte Lohnhöfe stehen in der Fahrzeugverleihe als Zielhof zur Auswahl',
-      'Rechnungen an Lohnhöfe: Zahlung bucht nur auf der eigenen Seite (externer Empfänger)',
-      'Lohnhöfe können jederzeit bearbeitet oder entfernt werden (nur Eigentümer/Manager)',
-    ],
-  },
-  {
-    date: '18. April 2026',
     version: 'v1.7',
     title: 'Öffentliche Hilfe- & Anleitungsseite',
     tag: 'Neu',

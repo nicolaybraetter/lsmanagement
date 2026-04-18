@@ -49,14 +49,6 @@ export const farmsApi = {
   rejectInvitation: (id: number) => api.post(`/api/farms/invitations/${id}/reject`),
 };
 
-// Lohnhöfe
-export const lohnhoefeApi = {
-  list: (farmId: number) => api.get(`/api/farms/${farmId}/lohnhoefe`),
-  create: (farmId: number, data: any) => api.post(`/api/farms/${farmId}/lohnhoefe`, data),
-  update: (farmId: number, id: number, data: any) => api.put(`/api/farms/${farmId}/lohnhoefe/${id}`, data),
-  delete: (farmId: number, id: number) => api.delete(`/api/farms/${farmId}/lohnhoefe/${id}`),
-};
-
 // Machines
 export const machinesApi = {
   list: (farmId: number) => api.get(`/api/farms/${farmId}/machines`),
@@ -64,7 +56,6 @@ export const machinesApi = {
   update: (farmId: number, id: number, data: any) => api.put(`/api/farms/${farmId}/machines/${id}`, data),
   delete: (farmId: number, id: number) => api.delete(`/api/farms/${farmId}/machines/${id}`),
   lend: (farmId: number, id: number, lent_to_farm_id: number) => api.post(`/api/farms/${farmId}/machines/${id}/lend`, { lent_to_farm_id }),
-  lendLohnhof: (farmId: number, id: number, lohnhof_id: number) => api.post(`/api/farms/${farmId}/machines/${id}/lend-lohnhof`, { lohnhof_id }),
   unlend: (farmId: number, id: number) => api.post(`/api/farms/${farmId}/machines/${id}/unlend`),
   sell: (farmId: number, id: number, sale_price: number) => api.post(`/api/farms/${farmId}/machines/${id}/sell`, { sale_price }),
   createRental: (farmId: number, machineId: number, data: any) => api.post(`/api/farms/${farmId}/machines/${machineId}/rentals`, data),

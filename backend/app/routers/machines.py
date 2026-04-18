@@ -11,11 +11,6 @@ from app.schemas.machine import (
     MachineCreate, MachineUpdate, MachineOut, MachineRentalCreate,
     MachineRentalOut, LendRequest, SellRequest,
 )
-from pydantic import BaseModel
-
-
-class LendLohnhofRequest(BaseModel):
-    lohnhof_id: int
 from app.core.security import get_current_user
 from app.models.user import User
 
@@ -35,15 +30,7 @@ def check_access(farm_id: int, user: User, db: Session):
 def _machine_out(machine: Machine, db: Session) -> dict:
     data = {c.name: getattr(machine, c.name) for c in machine.__table__.columns}
     lent_farm = db.query(Farm).filter(Farm.id == machine.lent_to_farm_id).first() if machine.lent_to_farm_id else None
-    lent_lohnhof_id = getattr(machine, "lent_to_lohnhof_id", None)
-    if lent_farm:
-        data["lent_to_farm_name"] = lent_farm.name
-    elif lent_lohnhof_id:
-        from app.models.lohnhof import LohnhofPartner
-        lohnhof = db.query(LohnhofPartner).filter(LohnhofPartner.id == lent_lohnhof_id).first()
-        data["lent_to_farm_name"] = lohnhof.name if lohnhof else None
-    else:
-        data["lent_to_farm_name"] = None
+    data["lent_to_farm_name"] = lent_farm.name if lent_farm else None
     return data
 
 
@@ -122,26 +109,6 @@ def lend_machine(farm_id: int, machine_id: int, data: LendRequest, db: Session =
     return _machine_out(machine, db)
 
 
-@router.post("/{machine_id}/lend-lohnhof", response_model=MachineOut)
-def lend_machine_to_lohnhof(farm_id: int, machine_id: int, data: LendLohnhofRequest, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    from app.models.lohnhof import LohnhofPartner
-    check_access(farm_id, user, db)
-    machine = db.query(Machine).filter(Machine.id == machine_id, Machine.farm_id == farm_id).first()
-    if not machine:
-        raise HTTPException(status_code=404, detail="Fahrzeug nicht gefunden")
-    if machine.is_sold:
-        raise HTTPException(status_code=400, detail="Verkaufte Fahrzeuge können nicht verliehen werden")
-    lohnhof = db.query(LohnhofPartner).filter(LohnhofPartner.id == data.lohnhof_id, LohnhofPartner.farm_id == farm_id).first()
-    if not lohnhof:
-        raise HTTPException(status_code=404, detail="Lohnhof nicht gefunden")
-    machine.lent_to_farm_id = None
-    machine.lent_to_lohnhof_id = data.lohnhof_id
-    machine.status = MachineStatus.rented_out
-    db.commit()
-    db.refresh(machine)
-    return _machine_out(machine, db)
-
-
 @router.post("/{machine_id}/unlend", response_model=MachineOut)
 def unlend_machine(farm_id: int, machine_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_access(farm_id, user, db)
@@ -149,7 +116,6 @@ def unlend_machine(farm_id: int, machine_id: int, db: Session = Depends(get_db),
     if not machine:
         raise HTTPException(status_code=404, detail="Fahrzeug nicht gefunden")
     machine.lent_to_farm_id = None
-    machine.lent_to_lohnhof_id = None
     machine.status = MachineStatus.available
     db.commit()
     db.refresh(machine)
@@ -169,7 +135,6 @@ def sell_machine(farm_id: int, machine_id: int, data: SellRequest, db: Session =
     machine.sold_at = datetime.utcnow()
     machine.status = MachineStatus.sold
     machine.lent_to_farm_id = None
-    machine.lent_to_lohnhof_id = None
     if data.sale_price > 0:
         db.add(FinanceEntry(
             farm_id=farm_id,

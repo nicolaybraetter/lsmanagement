@@ -2,8 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.database import create_tables, engine
-from app.routers import auth, farms, machines, fields, finances, storage, animals, biogas, todos, invoices, support, admin, crop_plans, notifications, lohnhoefe
-from app.models import lohnhof as _lohnhof_model  # ensure table is created
+from app.routers import auth, farms, machines, fields, finances, storage, animals, biogas, todos, invoices, support, admin, crop_plans, notifications
 
 app = FastAPI(
     title="LS Management API",
@@ -47,8 +46,6 @@ def _migrate_columns():
         ("machines", "sale_price",        "FLOAT DEFAULT 0"),
         ("machines", "sold_at",           "DATETIME"),
         ("users",    "last_seen",         "DATETIME"),
-        ("machines", "lent_to_lohnhof_id", "INTEGER"),
-        ("invoices", "receiver_lohnhof_id", "INTEGER"),
     ]
     with engine.connect() as conn:
         for table, col, col_type in migrations:
@@ -84,7 +81,6 @@ app.include_router(support.router)
 app.include_router(admin.router)
 app.include_router(crop_plans.router)
 app.include_router(notifications.router)
-app.include_router(lohnhoefe.router)
 
 
 @app.get("/")

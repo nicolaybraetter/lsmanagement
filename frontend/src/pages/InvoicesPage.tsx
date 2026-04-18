@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useFarmStore } from '../store/farmStore';
 import { useAuthStore } from '../store/authStore';
-import { invoicesApi, lohnhoefeApi } from '../services/api';
+import { invoicesApi } from '../services/api';
 import toast from 'react-hot-toast';
 import {
   FileText, Plus, X, Send, CreditCard, Eye, Ban,
@@ -52,7 +52,6 @@ export default function InvoicesPage() {
   const [sentInvoices, setSentInvoices] = useState<any[]>([]);
   const [receivedInvoices, setReceivedInvoices] = useState<any[]>([]);
   const [allFarms, setAllFarms] = useState<any[]>([]);
-  const [lohnhoefe, setLohnhoefe] = useState<any[]>([]);
   const [capital, setCapital] = useState<any>(null);
 
   const [showCreate, setShowCreate] = useState(false);
@@ -84,9 +83,6 @@ export default function InvoicesPage() {
     setReceivedInvoices(received.data);
     setAllFarms(farms.data.filter((f: any) => f.id !== currentFarm.id));
 
-    try { const lh = await lohnhoefeApi.list(currentFarm.id); setLohnhoefe(lh.data); }
-    catch { setLohnhoefe([]); }
-
     try {
       const cap = await invoicesApi.getCapital(currentFarm.id);
       setCapital(cap.data);
@@ -114,8 +110,8 @@ export default function InvoicesPage() {
     if (!currentFarm || !form.receiver_farm_id) return toast.error('Bitte Empfänger wählen');
     if (form.items.some(it => !it.description.trim())) return toast.error('Alle Positionen brauchen eine Beschreibung');
     try {
-      const [receiverType, receiverId] = form.receiver_farm_id.split(':');
-      const payload: any = {
+      await invoicesApi.createFromFarm(currentFarm.id, {
+        receiver_farm_id: parseInt(form.receiver_farm_id),
         issue_date: new Date(form.issue_date).toISOString(),
         due_date: new Date(form.due_date).toISOString(),
         tax_rate: parseFloat(form.tax_rate),
@@ -128,13 +124,7 @@ export default function InvoicesPage() {
           unit_price: parseFloat(it.unit_price),
           field_number: it.field_number || null,
         })),
-      };
-      if (receiverType === 'lohnhof') {
-        payload.receiver_lohnhof_id = parseInt(receiverId);
-      } else {
-        payload.receiver_farm_id = parseInt(receiverId);
-      }
-      await invoicesApi.createFromFarm(currentFarm.id, payload);
+      });
       toast.success('Rechnung erstellt');
       setShowCreate(false);
       setForm({ receiver_farm_id: '', issue_date: new Date().toISOString().split('T')[0], due_date: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0], tax_rate: '19', notes: '', items: [{ ...EMPTY_ITEM }] });
@@ -320,23 +310,12 @@ export default function InvoicesPage() {
               {/* Header fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="label">Empfänger *</label>
+                  <label className="label">Empfänger-Hof *</label>
                   <select className="input" value={form.receiver_farm_id} onChange={e => setForm({...form, receiver_farm_id: e.target.value})}>
-                    <option value="">— Empfänger wählen —</option>
-                    {lohnhoefe.length > 0 && (
-                      <optgroup label="Lohnhöfe (vordefiniert)">
-                        {lohnhoefe.map((lh: any) => <option key={`lohnhof:${lh.id}`} value={`lohnhof:${lh.id}`}>{lh.name}</option>)}
-                      </optgroup>
-                    )}
-                    {allFarms.length > 0 && (
-                      <optgroup label="Registrierte Höfe">
-                        {allFarms.map((f: any) => <option key={`farm:${f.id}`} value={`farm:${f.id}`}>{f.name} ({f.game_version})</option>)}
-                      </optgroup>
-                    )}
+                    <option value="">— Hof wählen —</option>
+                    {allFarms.map((f: any) => <option key={f.id} value={f.id}>{f.name} ({f.game_version})</option>)}
                   </select>
-                  {allFarms.length === 0 && lohnhoefe.length === 0 && (
-                    <p className="text-xs text-amber-600 mt-1">Keine Empfänger verfügbar. Lege unter Hofeinstellungen Lohnhöfe an.</p>
-                  )}
+                  {allFarms.length === 0 && <p className="text-xs text-amber-600 mt-1">⚠️ Keine anderen Höfe gefunden. Weitere Höfe müssen registriert sein.</p>}
                 </div>
                 <div>
                   <label className="label">Rechnungsdatum</label>
