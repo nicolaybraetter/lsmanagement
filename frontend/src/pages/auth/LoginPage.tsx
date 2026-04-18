@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -36,6 +37,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 flex items-center justify-center px-4">
+      <Helmet>
+        <title>Anmelden – LSManagement</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -48,10 +53,10 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" autoComplete="on">
             <div>
               <label className="label">Benutzername</label>
-              <input {...register('username')} className="input" placeholder="dein_benutzername" />
+              <input {...register('username')} autoComplete="username" className="input" placeholder="dein_benutzername" />
               {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>}
             </div>
             <div>
@@ -60,6 +65,7 @@ export default function LoginPage() {
                 <input
                   {...register('password')}
                   type={showPw ? 'text' : 'password'}
+                  autoComplete="current-password"
                   className="input pr-10"
                   placeholder="••••••••"
                 />

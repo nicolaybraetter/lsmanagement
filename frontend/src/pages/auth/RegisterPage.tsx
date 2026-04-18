@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -43,6 +44,11 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 flex items-center justify-center px-4 py-12">
+      <Helmet>
+        <title>Kostenlos registrieren – LSManagement für LS22 &amp; LS25</title>
+        <meta name="description" content="Erstelle deinen kostenlosen LSManagement-Account und verwalte deinen Farming Simulator 22 & 25 Hof professionell." />
+        <link rel="canonical" href="https://lscomm.braetter-int.de/register" />
+      </Helmet>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -55,21 +61,21 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" autoComplete="on">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="label">Benutzername *</label>
-                <input {...register('username')} className="input" placeholder="farmkönig_24" />
+                <input {...register('username')} autoComplete="username" className="input" placeholder="farmkönig_24" />
                 {errors.username && <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>}
               </div>
               <div>
                 <label className="label">Vollständiger Name</label>
-                <input {...register('full_name')} className="input" placeholder="Max Mustermann" />
+                <input {...register('full_name')} autoComplete="name" className="input" placeholder="Max Mustermann" />
               </div>
             </div>
             <div>
               <label className="label">E-Mail *</label>
-              <input {...register('email')} type="email" className="input" placeholder="max@beispiel.de" />
+              <input {...register('email')} type="email" autoComplete="email" className="input" placeholder="max@beispiel.de" />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
             </div>
             <div>
@@ -78,6 +84,7 @@ export default function RegisterPage() {
                 <input
                   {...register('password')}
                   type={showPw ? 'text' : 'password'}
+                  autoComplete="new-password"
                   className="input pr-10"
                   placeholder="Mindestens 6 Zeichen"
                 />
@@ -89,7 +96,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <label className="label">Passwort bestätigen *</label>
-              <input {...register('confirm_password')} type="password" className="input" placeholder="••••••••" />
+              <input {...register('confirm_password')} type="password" autoComplete="new-password" className="input" placeholder="••••••••" />
               {errors.confirm_password && <p className="text-red-500 text-xs mt-1">{errors.confirm_password.message}</p>}
             </div>
             <button type="submit" disabled={isSubmitting} className="btn-primary w-full py-3 text-base mt-2">
