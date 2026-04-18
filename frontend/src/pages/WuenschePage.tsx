@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Tractor, ArrowLeft, MessageSquare, Send, ChevronDown, ChevronUp, Sprout, Calendar } from 'lucide-react';
 import { supportApi } from '../services/api';
 import toast from 'react-hot-toast';
@@ -192,6 +193,13 @@ export default function WuenschePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>Wünsche & Anregungen – LSManagement Community</title>
+        <meta name="description" content="Teile deine Ideen und Wünsche für LSManagement — die kostenlose Betriebsverwaltung für Farming Simulator 22 & 25. Kommentiere und diskutiere mit der Community." />
+        <link rel="canonical" href="https://lscomm.braetter-int.de/wuensche" />
+        <meta property="og:url" content="https://lscomm.braetter-int.de/wuensche" />
+        <meta property="og:title" content="Wünsche & Anregungen – LSManagement Community" />
+      </Helmet>
       {/* Hero */}
       <div className="bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Tractor, ArrowLeft, Sprout, Wrench, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare } from 'lucide-react';
 
 interface NewsEntry {
@@ -136,6 +137,13 @@ const NEWS: NewsEntry[] = [
 export default function NewsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
+      <Helmet>
+        <title>Neuigkeiten & Updates – LSManagement für LS22 & LS25</title>
+        <meta name="description" content="Alle Neuerungen und Updates von LSManagement: neue Module, Bugfixes und Features für die kostenlose Farming Simulator 22 & 25 Betriebsverwaltung." />
+        <link rel="canonical" href="https://lscomm.braetter-int.de/news" />
+        <meta property="og:url" content="https://lscomm.braetter-int.de/news" />
+        <meta property="og:title" content="Neuigkeiten & Updates – LSManagement" />
+      </Helmet>
       {/* Hero */}
       <div className="bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">

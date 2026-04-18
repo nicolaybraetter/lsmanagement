@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { MessageSquarePlus, CheckCircle, Tractor, ArrowLeft, AlertCircle, Lightbulb, Bug, MessageCircle, HelpCircle } from 'lucide-react';
 import { supportApi } from '../services/api';
 
@@ -38,6 +39,13 @@ export default function SupportboxPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
+      <Helmet>
+        <title>Supportbox – Feedback & Wünsche einreichen | LSManagement</title>
+        <meta name="description" content="Sende Funktionswünsche, Fehlermeldungen oder allgemeines Feedback direkt an das LSManagement-Team – kostenlose Betriebsverwaltung für LS22 & LS25." />
+        <link rel="canonical" href="https://lscomm.braetter-int.de/supportbox" />
+        <meta property="og:url" content="https://lscomm.braetter-int.de/supportbox" />
+        <meta property="og:title" content="Supportbox – LSManagement" />
+      </Helmet>
       {/* Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">

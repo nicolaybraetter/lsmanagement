@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import {
   Tractor, MapPin, TrendingUp, Package, PawPrint, Flame,
   CheckSquare, Users, ArrowRight, Star, Shield, Zap, RotateCcw,
@@ -26,7 +27,15 @@ const stats = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>LSManagement – Kostenlose Betriebsverwaltung für Farming Simulator 22 &amp; 25</title>
+        <meta name="description" content="LSManagement ist die kostenlose Web-App für deinen LS22- und LS25-Hof. Maschinen, Felder, Finanzen, Tiere, Lager, Biogasanlage, Scrum-Board und Multiplayer – alles an einem Ort." />
+        <link rel="canonical" href="https://lscomm.braetter-int.de/" />
+        <meta property="og:url" content="https://lscomm.braetter-int.de/" />
+        <meta property="og:title" content="LSManagement – Betriebsverwaltung für LS22 &amp; LS25" />
+      </Helmet>
+      <div className="min-h-screen">
       {/* Hero Banner */}
       <section className="relative min-h-[85vh] flex items-center overflow-hidden">
         {/* Background */}
@@ -240,5 +249,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
