@@ -277,7 +277,7 @@ const SECTIONS: Section[] = [
     content: [
       {
         heading: 'Profil bearbeiten',
-        text: 'Klicke oben rechts auf deinen Benutzernamen und wähle „Profil". Dort kannst du deinen vollständigen Namen und deine E-Mail-Adresse ändern. Passwortänderungen sind aktuell über den Administrator möglich.',
+        text: 'Klicke oben rechts auf deinen Benutzernamen und wähle „Profil". Dort kannst du deinen vollständigen Namen und deine E-Mail-Adresse ändern.',
       },
       {
         heading: 'Konto löschen',
@@ -393,7 +393,7 @@ export default function HelpPage() {
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Thema suchen (z. B. „Maschine verleihen", „Einladung")"
+            placeholder="Thema suchen (z. B. Maschine verleihen, Einladung)"
             className="flex-1 text-sm text-gray-700 placeholder-gray-400 outline-none bg-transparent"
           />
           {search && (
