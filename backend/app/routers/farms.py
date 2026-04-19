@@ -218,7 +218,7 @@ def delete_farm(farm_id: int, db: Session = Depends(get_db), user: User = Depend
     from app.models.finance import FinanceEntry
     from app.models.storage import StorageItem, StorageTransaction
     from app.models.animal import Stable, Animal
-    from app.models.biogas import BiogasPlant, BiogasFeed
+    from app.models.biogas import BiogasPlant, BiogasFeedEntry
     from app.models.invoice import Invoice, InvoiceItem, FarmCapital
     from app.models.notification import Notification
 
@@ -249,7 +249,7 @@ def delete_farm(farm_id: int, db: Session = Depends(get_db), user: User = Depend
     # Storage & transactions
     storage_ids = [s.id for s in db.query(StorageItem).filter(StorageItem.farm_id == farm_id).all()]
     if storage_ids:
-        db.query(StorageTransaction).filter(StorageTransaction.item_id.in_(storage_ids)).delete(synchronize_session=False)
+        db.query(StorageTransaction).filter(StorageTransaction.storage_item_id.in_(storage_ids)).delete(synchronize_session=False)
     db.query(StorageItem).filter(StorageItem.farm_id == farm_id).delete(synchronize_session=False)
 
     # Animals & stables
@@ -261,7 +261,7 @@ def delete_farm(farm_id: int, db: Session = Depends(get_db), user: User = Depend
     # Biogas
     plant = db.query(BiogasPlant).filter(BiogasPlant.farm_id == farm_id).first()
     if plant:
-        db.query(BiogasFeed).filter(BiogasFeed.plant_id == plant.id).delete(synchronize_session=False)
+        db.query(BiogasFeedEntry).filter(BiogasFeedEntry.plant_id == plant.id).delete(synchronize_session=False)
         db.delete(plant)
 
     # Todo boards & tasks
