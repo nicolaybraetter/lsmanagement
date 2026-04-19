@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Tractor, ArrowLeft, Sprout, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare, HelpCircle } from 'lucide-react';
+import { Tractor, ArrowLeft, Sprout, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare, HelpCircle, Trash2 } from 'lucide-react';
 
 interface NewsEntry {
   date: string;
@@ -14,6 +14,21 @@ interface NewsEntry {
 }
 
 const NEWS: NewsEntry[] = [
+  {
+    date: '19. April 2026',
+    version: 'v1.8',
+    title: 'Hof löschen & Sicherheitsfixes',
+    tag: 'Update',
+    tagColor: 'bg-red-100 text-red-700 border-red-200',
+    icon: Trash2,
+    iconBg: 'bg-red-500',
+    items: [
+      'Hofbesitzer können ihren Hof jetzt dauerhaft löschen — inklusive aller Maschinen, Felder, Finanzen, Tiere, Aufgaben und Mitglieder',
+      'Sicherheitsabfrage: Hofname muss zur Bestätigung eingetippt werden',
+      'Nach dem Löschen wird der Nutzer in den gleichen Zustand wie nach der Erstregistrierung versetzt und kann einen neuen Hof erstellen oder eingeladen werden',
+      'Fix: Neu eingeloggte Nutzer wurden fälschlicherweise automatisch einem fremden Hof zugewiesen — dieser Fehler wurde behoben',
+    ],
+  },
   {
     date: '18. April 2026',
     version: 'v1.7',
