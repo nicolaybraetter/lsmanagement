@@ -132,6 +132,11 @@ Bei Build- oder Laufzeitfehlern:
 - `react-helmet-async`: seitenspezifische Meta-Tags auf allen öffentlichen Seiten
 - Sicherheits-Header in `nginx.conf`: CSP, X-Frame-Options, X-XSS-Protection etc.
 
+#### SEO-Referenz (verbindlich für alle SEO-Arbeiten)
+- **Google SEO Starter Guide**: https://developers.google.com/search/docs/fundamentals/seo-starter-guide?hl=de
+- Bei allen SEO-Maßnahmen (Meta-Tags, robots.txt, sitemap, strukturierte Daten, Canonical-URLs, Performance) immer an diesem Guide orientieren
+- Wichtige Punkte daraus: aussagekräftige `<title>`-Tags, beschreibende Meta-Descriptions (max. 160 Zeichen), saubere URL-Strukturen, Canonical-Tags bei Duplikaten, strukturierte Daten (JSON-LD) für Rich Results
+
 ### Technologie-Stack
 - **Backend**: FastAPI + SQLAlchemy + SQLite + python-jose + Pydantic v2
 - **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS + Zustand + Axios + react-helmet-async
