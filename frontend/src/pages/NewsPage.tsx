@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Tractor, ArrowLeft, Sprout, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare, HelpCircle, Trash2 } from 'lucide-react';
+import { Tractor, ArrowLeft, Sprout, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare, HelpCircle, Trash2, MessagesSquare } from 'lucide-react';
 
 interface NewsEntry {
   date: string;
@@ -14,6 +14,20 @@ interface NewsEntry {
 }
 
 const NEWS: NewsEntry[] = [
+  {
+    date: '19. April 2026',
+    version: 'v1.9',
+    title: 'Discord-Supportchannel in der Supportbox',
+    tag: 'Update',
+    tagColor: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    icon: MessagesSquare,
+    iconBg: 'bg-indigo-500',
+    items: [
+      'Discord-Link direkt in der Supportbox eingebunden',
+      'Schnellzugriff auf den Supportchannel — alle offenen Fragen willkommen',
+      'Alles wird gelesen und bei freier Zeit beantwortet',
+    ],
+  },
   {
     date: '19. April 2026',
     version: 'v1.8',

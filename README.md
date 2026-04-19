@@ -350,6 +350,7 @@ docker stack deploy -c docker-compose.portainer.yml lsmanagement
 
 | Version | Datum | Highlights |
 |---------|-------|-----------|
+| v1.9 | Apr 2026 | Discord-Supportchannel-Link in der Supportbox |
 | v1.8 | Apr 2026 | Hof löschen (Kaskadenlöschung aller Daten, Bestätigungseingabe), Fix: Cross-User-Farm-Bug beim Login |
 | v1.7 | Apr 2026 | Öffentliche Hilfeseite `/hilfe`, SEO-Optimierung (robots.txt, sitemap.xml, react-helmet-async), Sicherheits-Header (CSP, X-Frame-Options), Registrierungs-E-Mail an Betreiber |
 | v1.6 | Apr 2026 | Öffentliche Wünsche & Anregungen (`/wuensche`) mit Kommentarfunktion, Admin-Moderation für Einträge und Kommentare |
