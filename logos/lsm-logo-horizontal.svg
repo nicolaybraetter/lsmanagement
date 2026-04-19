@@ -1,0 +1,110 @@
+<svg width="700" height="180" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgH" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#166534"/>
+      <stop offset="100%" stop-color="#052e16"/>
+    </linearGradient>
+    <linearGradient id="bodyH" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <filter id="glowH">
+      <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="700" height="180" rx="20" fill="url(#bgH)"/>
+  <rect x="3" y="3" width="694" height="174" rx="18" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-opacity="0.3"/>
+
+  <!-- Divider line between tractor and text -->
+  <line x1="220" y1="22" x2="220" y2="158" stroke="#4ade80" stroke-width="1" stroke-opacity="0.25"/>
+
+  <!-- === MINI TRACTOR (left side) === -->
+  <!-- Ground shadow -->
+  <ellipse cx="110" cy="148" rx="88" ry="5" fill="#021a0e" fill-opacity="0.6"/>
+
+  <!-- Rear wheel -->
+  <circle cx="80"  cy="104" r="42" fill="#021a0e" stroke="#4ade80" stroke-width="5"/>
+  <circle cx="80"  cy="104" r="26" fill="none" stroke="#4ade80" stroke-width="3.5" stroke-opacity="0.7"/>
+  <line x1="80" y1="62"  x2="80" y2="146" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-opacity="0.8"/>
+  <line x1="38" y1="104" x2="122" y2="104" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-opacity="0.8"/>
+  <line x1="50" y1="74"  x2="110" y2="134" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-opacity="0.8"/>
+  <line x1="110" y1="74" x2="50"  y2="134" stroke="#4ade80" stroke-width="3" stroke-linecap="round" stroke-opacity="0.8"/>
+  <circle cx="80" cy="104" r="10" fill="#4ade80" filter="url(#glowH)"/>
+  <circle cx="80" cy="104" r="5"  fill="#052e16"/>
+
+  <!-- Fender -->
+  <path d="M40 80 Q80 60 120 80" stroke="#22c55e" stroke-width="9" fill="none" stroke-linecap="round"/>
+
+  <!-- Body -->
+  <rect x="80"  y="76" width="92" height="36" rx="5" fill="url(#bodyH)"/>
+  <rect x="80"  y="80" width="50" height="32" rx="4" fill="#15803d"/>
+
+  <!-- Cab -->
+  <rect x="130" y="44" width="56" height="52" rx="6" fill="#22c55e"/>
+  <rect x="130" y="44" width="56" height="7"  rx="6" fill="#86efac" fill-opacity="0.35"/>
+  <rect x="137" y="52" width="42" height="31" rx="4" fill="#d1fae5" fill-opacity="0.5"/>
+  <rect x="130" y="86" width="42" height="18" fill="#1ea54a"/>
+
+  <!-- Exhaust -->
+  <rect x="115" y="30" width="7" height="32" rx="3.5" fill="#86efac"/>
+  <circle cx="118" cy="27" r="5" fill="#86efac" fill-opacity="0.4"/>
+  <circle cx="123" cy="20" r="4" fill="#86efac" fill-opacity="0.22"/>
+
+  <!-- Front wheel -->
+  <circle cx="170" cy="118" r="25" fill="#021a0e" stroke="#4ade80" stroke-width="4.5"/>
+  <circle cx="170" cy="118" r="14" fill="none" stroke="#4ade80" stroke-width="3" stroke-opacity="0.7"/>
+  <circle cx="170" cy="118" r="6"  fill="#4ade80" filter="url(#glowH)"/>
+  <circle cx="170" cy="118" r="3"  fill="#052e16"/>
+
+  <!-- Headlight -->
+  <rect x="73" y="80" width="9" height="6" rx="2" fill="#fde68a"/>
+
+  <!-- === TEXT (right side) === -->
+  <!-- Main title -->
+  <text x="244" y="88"
+        font-family="Arial Black, Impact, Helvetica Neue, sans-serif"
+        font-size="54"
+        font-weight="900"
+        fill="#4ade80"
+        dominant-baseline="auto"
+        filter="url(#glowH)">LS</text>
+  <text x="312" y="88"
+        font-family="Arial Black, Impact, Helvetica Neue, sans-serif"
+        font-size="54"
+        font-weight="900"
+        fill="white">Management</text>
+
+  <!-- Tagline -->
+  <text x="244" y="118"
+        font-family="Arial, Helvetica Neue, sans-serif"
+        font-size="17"
+        fill="#86efac"
+        fill-opacity="0.85"
+        letter-spacing="0.5">Betriebsverwaltung &#183; Farming Simulator 22 &amp; 25</text>
+
+  <!-- Subtle accent line under title -->
+  <line x1="244" y1="97" x2="660" y2="97" stroke="#4ade80" stroke-width="1.5" stroke-opacity="0.2"/>
+
+  <!-- Version badge -->
+  <rect x="244" y="133" width="60" height="22" rx="6" fill="#4ade80" fill-opacity="0.15" stroke="#4ade80" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="274" y="148"
+        font-family="Arial, Helvetica Neue, sans-serif"
+        font-size="12"
+        font-weight="700"
+        fill="#4ade80"
+        text-anchor="middle"
+        letter-spacing="1">v1.9</text>
+
+  <!-- Domain -->
+  <text x="315" y="148"
+        font-family="Arial, Helvetica Neue, sans-serif"
+        font-size="13"
+        fill="#86efac"
+        fill-opacity="0.55">lscomm.braetter-int.de</text>
+</svg>

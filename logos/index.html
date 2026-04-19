@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <title>LSManagement – Logos</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #052e16; color: #d1fae5; font-family: Arial, sans-serif; min-height: 100vh; padding: 40px 20px; }
+    h1 { text-align: center; font-size: 2rem; color: #4ade80; margin-bottom: 8px; }
+    p.sub { text-align: center; color: #86efac; opacity: 0.7; margin-bottom: 40px; font-size: 0.95rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; max-width: 1100px; margin: 0 auto; }
+    .card { background: #14532d; border: 1px solid #22c55e33; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .card h2 { color: #4ade80; font-size: 1rem; letter-spacing: 1px; text-transform: uppercase; }
+    .card .preview { background: #052e16; border-radius: 10px; padding: 16px; width: 100%; display: flex; justify-content: center; align-items: center; min-height: 160px; }
+    .card .preview img { max-width: 100%; max-height: 220px; object-fit: contain; }
+    .card p { font-size: 0.82rem; color: #86efac; opacity: 0.7; text-align: center; }
+    a.btn { display: inline-block; background: #16a34a; color: white; padding: 10px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: background 0.2s; }
+    a.btn:hover { background: #4ade80; color: #052e16; }
+    .tip { max-width: 700px; margin: 40px auto 0; background: #14532d; border: 1px solid #4ade8033; border-radius: 12px; padding: 20px 24px; }
+    .tip h3 { color: #4ade80; margin-bottom: 10px; }
+    .tip ul { color: #86efac; font-size: 0.9rem; line-height: 1.8; padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>LSManagement – Logos</h1>
+  <p class="sub">Alle Logos zum Download als SVG · skalierbar in jede Größe</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Discord Server Icon</h2>
+      <div class="preview">
+        <img src="lsm-discord-icon.svg" alt="Discord Icon"/>
+      </div>
+      <p>512×512 px · Quadratisch mit abgerundeten Ecken<br/>Perfekt für Discord Server-Icon</p>
+      <a class="btn" href="lsm-discord-icon.svg" download>SVG herunterladen</a>
+    </div>
+
+    <div class="card">
+      <h2>Horizontales Banner</h2>
+      <div class="preview">
+        <img src="lsm-logo-horizontal.svg" alt="Horizontales Logo"/>
+      </div>
+      <p>700×180 px · Mit Traktorgrafik &amp; Schriftzug<br/>Für Website-Header, Discord-Banner</p>
+      <a class="btn" href="lsm-logo-horizontal.svg" download>SVG herunterladen</a>
+    </div>
+
+    <div class="card">
+      <h2>Quadratisches Logo</h2>
+      <div class="preview">
+        <img src="lsm-logo-square.svg" alt="Square Logo"/>
+      </div>
+      <p>512×560 px · Mit Traktorgrafik &amp; Schriftzug<br/>Für Social Media, Profilbilder</p>
+      <a class="btn" href="lsm-logo-square.svg" download>SVG herunterladen</a>
+    </div>
+  </div>
+
+  <div class="tip">
+    <h3>SVG → PNG konvertieren</h3>
+    <ul>
+      <li><strong>Inkscape</strong> (kostenlos) – Datei öffnen → Exportieren als PNG in beliebiger Größe</li>
+      <li><strong>Canva</strong> – SVG hochladen → als PNG exportieren (kostenlos)</li>
+      <li><strong>svgtopng.com</strong> – Online-Konverter, direkt im Browser</li>
+      <li>Discord empfiehlt <strong>512×512 PNG</strong> für Server-Icons</li>
+    </ul>
+  </div>
+</body>
+</html>
