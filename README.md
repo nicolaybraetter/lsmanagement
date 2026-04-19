@@ -52,6 +52,8 @@
 ### 🏡 Hofverwaltung
 - Hof mit Name, Beschreibung, Standort/Map und Spielversion (LS22/LS25) anlegen
 - Startkapital frei definierbar; aktuelles Guthaben wird automatisch bei Rechnungszahlungen aktualisiert
+- Hofbesitzer können ihren Hof dauerhaft löschen (mit Bestätigungseingabe des Hofnamens)
+- Nach dem Löschen kann der Benutzer einen neuen Hof anlegen oder von anderen eingeladen werden
 
 ### 🚜 Fuhrparkverwaltung
 - 12 Maschinenkategorien (Traktor, Mähdrescher, Sämaschine, Güllefass u.v.m.)
@@ -286,6 +288,7 @@ lsmanagement/
 | GET/PUT | `/api/auth/me` | Eigenes Profil |
 | DELETE | `/api/auth/me` | Konto löschen |
 | GET/POST | `/api/farms` | Höfe |
+| DELETE | `/api/farms/{id}` | Hof löschen (nur Eigentümer) |
 | POST | `/api/farms/{id}/members/invite` | Mitglied einladen |
 | GET/POST | `/api/farms/{id}/machines` | Fuhrpark |
 | POST | `/api/farms/{id}/machines/{id}/lend` | Maschine verleihen |
@@ -347,6 +350,7 @@ docker stack deploy -c docker-compose.portainer.yml lsmanagement
 
 | Version | Datum | Highlights |
 |---------|-------|-----------|
+| v1.8 | Apr 2026 | Hof löschen (Kaskadenlöschung aller Daten, Bestätigungseingabe), Fix: Cross-User-Farm-Bug beim Login |
 | v1.7 | Apr 2026 | Öffentliche Hilfeseite `/hilfe`, SEO-Optimierung (robots.txt, sitemap.xml, react-helmet-async), Sicherheits-Header (CSP, X-Frame-Options), Registrierungs-E-Mail an Betreiber |
 | v1.6 | Apr 2026 | Öffentliche Wünsche & Anregungen (`/wuensche`) mit Kommentarfunktion, Admin-Moderation für Einträge und Kommentare |
 | v1.5 | Apr 2026 | Hofinternes Benachrichtigungssystem (Bell-Icon, Echtzeit-Polling, E-Mail bei Aufgabenzuweisung) |
