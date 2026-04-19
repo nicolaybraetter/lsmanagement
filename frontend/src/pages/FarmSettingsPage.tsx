@@ -4,7 +4,7 @@ import { useFarmStore } from '../store/farmStore';
 import { useAuthStore } from '../store/authStore';
 import { farmsApi, invoicesApi } from '../services/api';
 import toast from 'react-hot-toast';
-import { Settings, Wallet, Save, Edit2, LogOut } from 'lucide-react';
+import { Settings, Wallet, Save, Edit2, LogOut, Trash2 } from 'lucide-react';
 
 export default function FarmSettingsPage() {
   const navigate = useNavigate();
@@ -18,6 +18,9 @@ export default function FarmSettingsPage() {
   const [editCapital, setEditCapital] = useState(false);
   const [leaveConfirm, setLeaveConfirm] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteInput, setDeleteInput] = useState('');
 
   const isOwnerOrManager = currentFarm?.owner_id === user?.id;
 
@@ -207,6 +210,61 @@ export default function FarmSettingsPage() {
           <p className="text-sm text-gray-400 mt-2">Nur Eigentümer und Manager können das Startkapital ändern.</p>
         )}
       </div>
+
+      {/* Delete farm — only for owner */}
+      {currentFarm && user && currentFarm.owner_id === user.id && (
+        <div className="card border-red-300 bg-red-50/40">
+          <h2 className="font-bold text-red-700 text-lg mb-1 flex items-center gap-2">
+            <Trash2 size={18} /> Hof löschen
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Der Hof <span className="font-semibold">{currentFarm.name}</span> wird dauerhaft gelöscht — inklusive aller Maschinen, Felder, Finanzen, Tiere, Aufgaben und Mitglieder. Diese Aktion kann nicht rückgängig gemacht werden.
+          </p>
+          {!deleteConfirm ? (
+            <button onClick={() => { setDeleteConfirm(true); setDeleteInput(''); }}
+              className="flex items-center gap-2 bg-white border border-red-300 text-red-600 hover:bg-red-600 hover:text-white font-semibold px-4 py-2.5 rounded-xl transition text-sm">
+              <Trash2 size={15} /> Hof löschen
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-red-700">
+                Zur Bestätigung den Hofnamen eingeben: <span className="font-mono bg-red-100 px-1 rounded">{currentFarm.name}</span>
+              </p>
+              <input
+                className="input"
+                value={deleteInput}
+                onChange={e => setDeleteInput(e.target.value)}
+                placeholder={currentFarm.name}
+                autoFocus
+              />
+              <div className="flex gap-3">
+                <button onClick={() => { setDeleteConfirm(false); setDeleteInput(''); }} className="btn-secondary text-sm">Abbrechen</button>
+                <button
+                  disabled={deleting || deleteInput !== currentFarm.name}
+                  onClick={async () => {
+                    if (!currentFarm || !user) return;
+                    setDeleting(true);
+                    try {
+                      await farmsApi.deleteFarm(currentFarm.id);
+                      toast.success(`Hof „${currentFarm.name}" wurde gelöscht`);
+                      const remaining = farms.filter((f: any) => f.id !== currentFarm.id);
+                      setFarms(remaining);
+                      setCurrentFarm(remaining.length > 0 ? remaining[0] : null);
+                      navigate('/dashboard');
+                    } catch (e: any) {
+                      toast.error(e.response?.data?.detail || 'Fehler beim Löschen');
+                    } finally {
+                      setDeleting(false);
+                    }
+                  }}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 text-white font-semibold px-4 py-2.5 rounded-xl transition text-sm">
+                  {deleting ? '…' : <><Trash2 size={15} /> Endgültig löschen</>}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Leave farm — only for non-owners */}
       {currentFarm && user && currentFarm.owner_id !== user.id && (

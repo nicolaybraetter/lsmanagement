@@ -209,3 +209,85 @@ def remove_member(farm_id: int, user_id: int, db: Session = Depends(get_db), use
         member.is_active = False
         db.commit()
     return {"message": "Mitglied entfernt"}
+
+
+@router.delete("/{farm_id}")
+def delete_farm(farm_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    from app.models.machine import Machine, MachineRental
+    from app.models.field import Field, CropRotationPlan
+    from app.models.finance import FinanceEntry
+    from app.models.storage import StorageItem, StorageTransaction
+    from app.models.animal import Stable, Animal
+    from app.models.biogas import BiogasPlant, BiogasFeed
+    from app.models.invoice import Invoice, InvoiceItem, FarmCapital
+    from app.models.notification import Notification
+
+    farm = db.query(Farm).filter(Farm.id == farm_id).first()
+    if not farm:
+        raise HTTPException(status_code=404, detail="Hof nicht gefunden")
+    if farm.owner_id != user.id:
+        raise HTTPException(status_code=403, detail="Nur der Eigentümer kann den Hof löschen")
+
+    # Machines & rentals
+    machine_ids = [m.id for m in db.query(Machine).filter(Machine.farm_id == farm_id).all()]
+    if machine_ids:
+        db.query(MachineRental).filter(MachineRental.machine_id.in_(machine_ids)).delete(synchronize_session=False)
+    db.query(Machine).filter(Machine.farm_id == farm_id).delete(synchronize_session=False)
+    db.query(Machine).filter(Machine.lent_to_farm_id == farm_id).update(
+        {"lent_to_farm_id": None}, synchronize_session=False
+    )
+
+    # Fields & crop rotation
+    field_ids = [f.id for f in db.query(Field).filter(Field.farm_id == farm_id).all()]
+    if field_ids:
+        db.query(CropRotationPlan).filter(CropRotationPlan.field_id.in_(field_ids)).delete(synchronize_session=False)
+    db.query(Field).filter(Field.farm_id == farm_id).delete(synchronize_session=False)
+
+    # Finances
+    db.query(FinanceEntry).filter(FinanceEntry.farm_id == farm_id).delete(synchronize_session=False)
+
+    # Storage & transactions
+    storage_ids = [s.id for s in db.query(StorageItem).filter(StorageItem.farm_id == farm_id).all()]
+    if storage_ids:
+        db.query(StorageTransaction).filter(StorageTransaction.item_id.in_(storage_ids)).delete(synchronize_session=False)
+    db.query(StorageItem).filter(StorageItem.farm_id == farm_id).delete(synchronize_session=False)
+
+    # Animals & stables
+    stable_ids = [s.id for s in db.query(Stable).filter(Stable.farm_id == farm_id).all()]
+    if stable_ids:
+        db.query(Animal).filter(Animal.stable_id.in_(stable_ids)).delete(synchronize_session=False)
+    db.query(Stable).filter(Stable.farm_id == farm_id).delete(synchronize_session=False)
+
+    # Biogas
+    plant = db.query(BiogasPlant).filter(BiogasPlant.farm_id == farm_id).first()
+    if plant:
+        db.query(BiogasFeed).filter(BiogasFeed.plant_id == plant.id).delete(synchronize_session=False)
+        db.delete(plant)
+
+    # Todo boards & tasks
+    board_ids = [b.id for b in db.query(TodoBoard).filter(TodoBoard.farm_id == farm_id).all()]
+    if board_ids:
+        db.query(TodoTask).filter(TodoTask.board_id.in_(board_ids)).delete(synchronize_session=False)
+    db.query(TodoBoard).filter(TodoBoard.farm_id == farm_id).delete(synchronize_session=False)
+
+    # Invoices & items
+    invoice_ids = [i.id for i in db.query(Invoice).filter(
+        (Invoice.sender_farm_id == farm_id) | (Invoice.receiver_farm_id == farm_id)
+    ).all()]
+    if invoice_ids:
+        db.query(InvoiceItem).filter(InvoiceItem.invoice_id.in_(invoice_ids)).delete(synchronize_session=False)
+    db.query(Invoice).filter(
+        (Invoice.sender_farm_id == farm_id) | (Invoice.receiver_farm_id == farm_id)
+    ).delete(synchronize_session=False)
+    db.query(FarmCapital).filter(FarmCapital.farm_id == farm_id).delete(synchronize_session=False)
+
+    # Invitations & members
+    db.query(FarmInvitation).filter(FarmInvitation.farm_id == farm_id).delete(synchronize_session=False)
+    db.query(FarmMember).filter(FarmMember.farm_id == farm_id).delete(synchronize_session=False)
+
+    # Notifications
+    db.query(Notification).filter(Notification.farm_id == farm_id).delete(synchronize_session=False)
+
+    db.delete(farm)
+    db.commit()
+    return {"ok": True}

@@ -47,6 +47,7 @@ export const farmsApi = {
   pendingInvitations: () => api.get('/api/farms/invitations/pending'),
   acceptInvitation: (id: number) => api.post(`/api/farms/invitations/${id}/accept`),
   rejectInvitation: (id: number) => api.post(`/api/farms/invitations/${id}/reject`),
+  deleteFarm: (id: number) => api.delete(`/api/farms/${id}`),
 };
 
 // Machines
