@@ -66,6 +66,7 @@ class Machine(Base):
     farm = relationship("Farm", back_populates="machines", foreign_keys=[farm_id])
     lent_to_farm = relationship("Farm", foreign_keys=[lent_to_farm_id])
     rentals = relationship("MachineRental", back_populates="machine")
+    service_entries = relationship("MachineServiceEntry", cascade="all, delete-orphan")
 
 
 class MachineRental(Base):
@@ -84,3 +85,26 @@ class MachineRental(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     machine = relationship("Machine", back_populates="rentals")
+
+
+class MachineServiceType(str, enum.Enum):
+    maintenance = "Wartung"
+    repair = "Reparatur"
+
+
+class MachineServiceEntry(Base):
+    __tablename__ = "machine_service_entries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    machine_id = Column(Integer, ForeignKey("machines.id"), nullable=False)
+    farm_id = Column(Integer, ForeignKey("farms.id"), nullable=False)
+    type = Column(Enum(MachineServiceType), nullable=False)
+    title = Column(String(150), nullable=False)
+    description = Column(Text)
+    cost = Column(Float, default=0)
+    service_date = Column(DateTime(timezone=True), nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    machine = relationship("Machine")
+    farm = relationship("Farm")

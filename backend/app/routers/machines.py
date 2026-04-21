@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
 from app.database import get_db
-from app.models.machine import Machine, MachineRental, MachineStatus
+from app.models.machine import Machine, MachineRental, MachineStatus, MachineServiceEntry
 from app.models.farm import Farm, FarmMember
 from app.models.finance import FinanceEntry, TransactionType, FinanceCategory
 from app.models.invoice import FarmCapital
 from app.schemas.machine import (
     MachineCreate, MachineUpdate, MachineOut, MachineRentalCreate,
-    MachineRentalOut, LendRequest, SellRequest,
+    MachineRentalOut, LendRequest, SellRequest, MachineServiceCreate, MachineServiceOut,
 )
 from app.core.security import get_current_user
 from app.models.user import User
@@ -39,6 +39,13 @@ def list_machines(farm_id: int, db: Session = Depends(get_db), user: User = Depe
     check_access(farm_id, user, db)
     machines = db.query(Machine).filter(Machine.farm_id == farm_id).all()
     return [_machine_out(m, db) for m in machines]
+
+
+@router.get("/lend-targets")
+def list_lend_targets(farm_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    check_access(farm_id, user, db)
+    farms = db.query(Farm).filter(Farm.is_active == True, Farm.id != farm_id).order_by(Farm.name.asc()).all()
+    return [{"id": f.id, "name": f.name, "game_version": f.game_version} for f in farms]
 
 
 @router.post("", response_model=MachineOut)
@@ -188,3 +195,88 @@ def return_rental(farm_id: int, machine_id: int, rental_id: int, db: Session = D
         machine.status = MachineStatus.available
     db.commit()
     return {"message": "Fahrzeug zurückgegeben"}
+
+
+@router.get("/{machine_id}/services", response_model=List[MachineServiceOut])
+def list_services(farm_id: int, machine_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    check_access(farm_id, user, db)
+    machine = db.query(Machine).filter(Machine.id == machine_id, Machine.farm_id == farm_id).first()
+    if not machine:
+        raise HTTPException(status_code=404, detail="Fahrzeug nicht gefunden")
+    return (
+        db.query(MachineServiceEntry)
+        .filter(MachineServiceEntry.machine_id == machine_id, MachineServiceEntry.farm_id == farm_id)
+        .order_by(MachineServiceEntry.service_date.desc(), MachineServiceEntry.created_at.desc())
+        .all()
+    )
+
+
+@router.post("/{machine_id}/services", response_model=MachineServiceOut)
+def create_service(
+    farm_id: int,
+    machine_id: int,
+    data: MachineServiceCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    check_access(farm_id, user, db)
+    machine = db.query(Machine).filter(Machine.id == machine_id, Machine.farm_id == farm_id).first()
+    if not machine:
+        raise HTTPException(status_code=404, detail="Fahrzeug nicht gefunden")
+
+    entry = MachineServiceEntry(
+        machine_id=machine_id,
+        farm_id=farm_id,
+        type=data.type,
+        title=data.title,
+        description=data.description,
+        cost=data.cost or 0,
+        service_date=data.service_date,
+        created_by=user.id,
+    )
+    db.add(entry)
+
+    if entry.cost and entry.cost > 0:
+        db.add(FinanceEntry(
+            farm_id=farm_id,
+            type=TransactionType.expense,
+            category=FinanceCategory.repair,
+            amount=entry.cost,
+            description=f"{entry.type}: {machine.name} – {entry.title}",
+            date=entry.service_date,
+            machine_id=machine.id,
+            created_by=user.id,
+        ))
+        capital = db.query(FarmCapital).filter(FarmCapital.farm_id == farm_id).first()
+        if capital:
+            capital.current_balance -= entry.cost
+
+    if entry.type.value == "Wartung":
+        machine.status = MachineStatus.maintenance
+    elif entry.type.value == "Reparatur":
+        machine.status = MachineStatus.broken
+
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+@router.delete("/{machine_id}/services/{entry_id}")
+def delete_service(
+    farm_id: int,
+    machine_id: int,
+    entry_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    check_access(farm_id, user, db)
+    entry = db.query(MachineServiceEntry).filter(
+        MachineServiceEntry.id == entry_id,
+        MachineServiceEntry.machine_id == machine_id,
+        MachineServiceEntry.farm_id == farm_id,
+    ).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Serviceeintrag nicht gefunden")
+    db.delete(entry)
+    db.commit()
+    return {"ok": True}

@@ -53,6 +53,7 @@ export const farmsApi = {
 // Machines
 export const machinesApi = {
   list: (farmId: number) => api.get(`/api/farms/${farmId}/machines`),
+  lendTargets: (farmId: number) => api.get(`/api/farms/${farmId}/machines/lend-targets`),
   create: (farmId: number, data: any) => api.post(`/api/farms/${farmId}/machines`, data),
   update: (farmId: number, id: number, data: any) => api.put(`/api/farms/${farmId}/machines/${id}`, data),
   delete: (farmId: number, id: number) => api.delete(`/api/farms/${farmId}/machines/${id}`),
@@ -62,6 +63,9 @@ export const machinesApi = {
   createRental: (farmId: number, machineId: number, data: any) => api.post(`/api/farms/${farmId}/machines/${machineId}/rentals`, data),
   listRentals: (farmId: number, machineId: number) => api.get(`/api/farms/${farmId}/machines/${machineId}/rentals`),
   returnRental: (farmId: number, machineId: number, rentalId: number) => api.put(`/api/farms/${farmId}/machines/${machineId}/rentals/${rentalId}/return`),
+  listServices: (farmId: number, machineId: number) => api.get(`/api/farms/${farmId}/machines/${machineId}/services`),
+  createService: (farmId: number, machineId: number, data: any) => api.post(`/api/farms/${farmId}/machines/${machineId}/services`, data),
+  deleteService: (farmId: number, machineId: number, entryId: number) => api.delete(`/api/farms/${farmId}/machines/${machineId}/services/${entryId}`),
 };
 
 // Fields

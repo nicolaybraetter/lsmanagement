@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-from app.models.machine import MachineCategory, MachineStatus
+from app.models.machine import MachineCategory, MachineStatus, MachineServiceType
 
 
 class MachineCreate(BaseModel):
@@ -85,6 +85,30 @@ class MachineRentalOut(BaseModel):
     total_cost: Optional[float]
     notes: Optional[str]
     is_returned: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class MachineServiceCreate(BaseModel):
+    type: MachineServiceType
+    title: str
+    description: Optional[str] = None
+    cost: Optional[float] = 0
+    service_date: datetime
+
+
+class MachineServiceOut(BaseModel):
+    id: int
+    machine_id: int
+    farm_id: int
+    type: MachineServiceType
+    title: str
+    description: Optional[str]
+    cost: float
+    service_date: datetime
+    created_by: Optional[int]
     created_at: datetime
 
     class Config:

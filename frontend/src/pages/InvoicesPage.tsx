@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useFarmStore } from '../store/farmStore';
 import { useAuthStore } from '../store/authStore';
-import { invoicesApi } from '../services/api';
+import { invoicesApi, machinesApi } from '../services/api';
 import toast from 'react-hot-toast';
 import {
   FileText, Plus, X, Send, CreditCard, Eye, Ban,
@@ -43,6 +43,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }>
 };
 
 const EMPTY_ITEM = { item_type: 'Sonstige Leistung', description: '', quantity: '1', unit: 'ha', unit_price: '0', field_number: '' };
+const UNIT_OPTIONS = ['ha', 't', 'l', 'qm³'];
 
 export default function InvoicesPage() {
   const { currentFarm } = useFarmStore();
@@ -53,6 +54,7 @@ export default function InvoicesPage() {
   const [receivedInvoices, setReceivedInvoices] = useState<any[]>([]);
   const [allFarms, setAllFarms] = useState<any[]>([]);
   const [capital, setCapital] = useState<any>(null);
+  const [fleetServices, setFleetServices] = useState<Array<{ key: string; label: string; unit: string; price: number }>>([]);
 
   const [showCreate, setShowCreate] = useState(false);
   const [showDetail, setShowDetail] = useState<any>(null);
@@ -81,12 +83,25 @@ export default function InvoicesPage() {
     ]);
     setSentInvoices(sent.data);
     setReceivedInvoices(received.data);
-    setAllFarms(farms.data.filter((f: any) => f.id !== currentFarm.id));
+    setAllFarms(farms.data);
 
     try {
       const cap = await invoicesApi.getCapital(currentFarm.id);
       setCapital(cap.data);
     } catch { setCapital(null); }
+
+    try {
+      const machines = await machinesApi.list(currentFarm.id);
+      const lent = (machines.data || []).filter((m: any) => m.status === 'verliehen' && !m.is_sold);
+      setFleetServices(lent.map((m: any) => ({
+        key: `machine:${m.id}`,
+        label: `Verleih: ${m.name}${m.lent_to_farm_name ? ` → ${m.lent_to_farm_name}` : ''}`,
+        unit: 'h',
+        price: Number(m.hourly_rental_rate || m.daily_rental_rate || 0),
+      })));
+    } catch {
+      setFleetServices([]);
+    }
   };
 
   const addItem = () => setForm({ ...form, items: [...form.items, { ...EMPTY_ITEM }] });
@@ -99,6 +114,14 @@ export default function InvoicesPage() {
       const mid = ((PRICE_LIST[val].min + PRICE_LIST[val].max) / 2).toFixed(2);
       items[i].unit_price = mid;
       items[i].description = val;
+    }
+    if (field === 'item_type' && val.startsWith('machine:')) {
+      const service = fleetServices.find(s => s.key === val);
+      if (service) {
+        items[i].unit = service.unit;
+        items[i].unit_price = String(service.price || 0);
+        items[i].description = service.label;
+      }
     }
     setForm({ ...form, items });
   };
@@ -117,7 +140,7 @@ export default function InvoicesPage() {
         tax_rate: parseFloat(form.tax_rate),
         notes: form.notes || null,
         items: form.items.map(it => ({
-          item_type: it.item_type,
+          item_type: Object.prototype.hasOwnProperty.call(PRICE_LIST, it.item_type) ? it.item_type : 'Sonstige Leistung',
           description: it.description,
           quantity: parseFloat(it.quantity),
           unit: it.unit,
@@ -313,7 +336,7 @@ export default function InvoicesPage() {
                   <label className="label">Empfänger-Hof *</label>
                   <select className="input" value={form.receiver_farm_id} onChange={e => setForm({...form, receiver_farm_id: e.target.value})}>
                     <option value="">— Hof wählen —</option>
-                    {allFarms.map((f: any) => <option key={f.id} value={f.id}>{f.name} ({f.game_version})</option>)}
+                    {allFarms.filter((f: any) => f.id !== currentFarm?.id).map((f: any) => <option key={f.id} value={f.id}>{f.name} ({f.game_version})</option>)}
                   </select>
                   {allFarms.length === 0 && <p className="text-xs text-amber-600 mt-1">⚠️ Keine anderen Höfe gefunden. Weitere Höfe müssen registriert sein.</p>}
                 </div>
@@ -347,10 +370,15 @@ export default function InvoicesPage() {
                   {form.items.map((item, i) => (
                     <div key={i} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                       <div className="grid grid-cols-12 gap-3 items-end">
-                        <div className="col-span-4">
+                        <div className="col-span-3">
                           <label className="label text-xs">Leistungsart</label>
                           <select className="input text-sm" value={item.item_type} onChange={e => updateItem(i, 'item_type', e.target.value)}>
                             {Object.keys(PRICE_LIST).map(k => <option key={k}>{k}</option>)}
+                            {fleetServices.length > 0 && (
+                              <optgroup label="Verliehene Fahrzeuge">
+                                {fleetServices.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                              </optgroup>
+                            )}
                           </select>
                         </div>
                         <div className="col-span-3">
@@ -361,15 +389,17 @@ export default function InvoicesPage() {
                           <label className="label text-xs">Feldnr.</label>
                           <input className="input text-sm" value={item.field_number} onChange={e => updateItem(i, 'field_number', e.target.value)} placeholder="F01" />
                         </div>
-                        <div className="col-span-1">
+                        <div className="col-span-2">
                           <label className="label text-xs">Menge</label>
                           <input className="input text-sm" type="number" step="0.01" value={item.quantity} onChange={e => updateItem(i, 'quantity', e.target.value)} />
                         </div>
                         <div className="col-span-1">
                           <label className="label text-xs">Einheit</label>
-                          <input className="input text-sm" value={item.unit} onChange={e => updateItem(i, 'unit', e.target.value)} />
+                          <select className="input text-sm" value={item.unit} onChange={e => updateItem(i, 'unit', e.target.value)}>
+                            {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                          </select>
                         </div>
-                        <div className="col-span-1">
+                        <div className="col-span-2">
                           <label className="label text-xs">Preis/Einh.</label>
                           <input className="input text-sm" type="number" step="0.01" value={item.unit_price} onChange={e => updateItem(i, 'unit_price', e.target.value)} />
                         </div>

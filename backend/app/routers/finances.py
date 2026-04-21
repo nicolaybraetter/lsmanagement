@@ -29,6 +29,19 @@ def _adjust_capital(farm_id: int, delta: float, db: Session):
         capital.current_balance += delta
 
 
+def _recompute_capital(farm_id: int, db: Session):
+    capital = db.query(FarmCapital).filter(FarmCapital.farm_id == farm_id).first()
+    if not capital:
+        return
+    totals = db.query(
+        func.coalesce(func.sum(FinanceEntry.amount).filter(FinanceEntry.type == TransactionType.income), 0.0),
+        func.coalesce(func.sum(FinanceEntry.amount).filter(FinanceEntry.type == TransactionType.expense), 0.0),
+    ).filter(FinanceEntry.farm_id == farm_id).first()
+    income_total = float(totals[0] or 0)
+    expense_total = float(totals[1] or 0)
+    capital.current_balance = round(float(capital.starting_capital or 0) + income_total - expense_total, 2)
+
+
 @router.get("", response_model=List[FinanceOut])
 def list_finances(farm_id: int, year: Optional[int] = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_access(farm_id, user, db)
@@ -44,6 +57,7 @@ def create_finance(farm_id: int, data: FinanceCreate, db: Session = Depends(get_
     entry = FinanceEntry(**data.model_dump(), farm_id=farm_id, created_by=user.id)
     db.add(entry)
     _adjust_capital(farm_id, _capital_delta(data.type, data.amount), db)
+    _recompute_capital(farm_id, db)
     db.commit()
     db.refresh(entry)
     return entry
@@ -61,6 +75,7 @@ def update_finance(farm_id: int, entry_id: int, data: FinanceUpdate, db: Session
         setattr(entry, k, v)
     # Apply new effect
     _adjust_capital(farm_id, _capital_delta(entry.type, entry.amount), db)
+    _recompute_capital(farm_id, db)
     db.commit()
     db.refresh(entry)
     return entry
@@ -75,6 +90,7 @@ def delete_finance(farm_id: int, entry_id: int, db: Session = Depends(get_db), u
     # Reverse effect on capital
     _adjust_capital(farm_id, -_capital_delta(entry.type, entry.amount), db)
     db.delete(entry)
+    _recompute_capital(farm_id, db)
     db.commit()
     return {"message": "Eintrag gelöscht"}
 

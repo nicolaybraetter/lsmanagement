@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime
 import re
@@ -8,7 +9,7 @@ from app.models.invoice import Invoice, InvoiceItem, FarmCapital, InvoiceStatus
 from app.models.farm import Farm, FarmMember, MemberRole
 from app.models.finance import FinanceEntry, TransactionType, FinanceCategory
 from app.models.user import User
-from app.schemas.invoice import InvoiceCreate, InvoiceUpdate, InvoiceOut, FarmCapitalSet, FarmCapitalOut
+from app.schemas.invoice import InvoiceCreate, InvoiceOut, FarmCapitalSet, FarmCapitalOut
 from app.core.security import get_current_user
 
 router = APIRouter(prefix="/api/invoices", tags=["invoices"])
@@ -41,6 +42,19 @@ def _calc_totals(items_data: list, tax_rate: float):
     net = sum(i["quantity"] * i["unit_price"] for i in items_data)
     gross = net * (1 + tax_rate / 100)
     return round(net, 2), round(gross, 2)
+
+
+def _recompute_capital_for_farm(farm_id: int, db: Session):
+    cap = db.query(FarmCapital).filter(FarmCapital.farm_id == farm_id).first()
+    if not cap:
+        return
+    totals = db.query(
+        func.coalesce(func.sum(FinanceEntry.amount).filter(FinanceEntry.type == TransactionType.income), 0.0),
+        func.coalesce(func.sum(FinanceEntry.amount).filter(FinanceEntry.type == TransactionType.expense), 0.0),
+    ).filter(FinanceEntry.farm_id == farm_id).first()
+    income_total = float(totals[0] or 0)
+    expense_total = float(totals[1] or 0)
+    cap.current_balance = round(float(cap.starting_capital or 0) + income_total - expense_total, 2)
 
 
 def _enrich(inv: Invoice, db: Session) -> InvoiceOut:
@@ -76,6 +90,9 @@ def get_capital(farm_id: int, db: Session = Depends(get_db), user: User = Depend
     cap = db.query(FarmCapital).filter(FarmCapital.farm_id == farm_id).first()
     if not cap:
         raise HTTPException(status_code=404, detail="Kein Startkapital definiert")
+    _recompute_capital_for_farm(farm_id, db)
+    db.commit()
+    db.refresh(cap)
     return cap
 
 
@@ -97,9 +114,17 @@ def set_capital(farm_id: int, data: FarmCapitalSet, db: Session = Depends(get_db
             set_by=user.id
         )
         db.add(cap)
+    _recompute_capital_for_farm(farm_id, db)
     db.commit()
     db.refresh(cap)
     return cap
+
+
+@router.get("/farms/all", response_model=List[dict])
+def list_all_farms(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """List all farms (for invoice recipient selection)."""
+    farms = db.query(Farm).filter(Farm.is_active == True).order_by(Farm.name.asc()).all()
+    return [{"id": f.id, "name": f.name, "game_version": f.game_version, "owner_id": f.owner_id} for f in farms]
 
 
 # ── Invoice endpoints ─────────────────────────────────────────────
@@ -257,8 +282,8 @@ def pay_invoice(invoice_id: int, db: Session = Depends(get_db), user: User = Dep
     inv = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not inv:
         raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
-    if not _is_manager_or_owner(inv.receiver_farm_id, user, db):
-        raise HTTPException(status_code=403, detail="Nur Empfänger-Manager können bezahlen")
+    if not _is_farm_member(inv.receiver_farm_id, user, db):
+        raise HTTPException(status_code=403, detail="Nur Mitglieder des Empfänger-Hofs können bezahlen")
     if inv.status not in (InvoiceStatus.sent, InvoiceStatus.viewed, InvoiceStatus.overdue):
         raise HTTPException(status_code=400, detail=f"Rechnung kann in Status '{inv.status}' nicht bezahlt werden")
 
@@ -290,14 +315,8 @@ def pay_invoice(invoice_id: int, db: Session = Depends(get_db), user: User = Dep
         created_by=user.id,
     ))
 
-    # Update capital balances if they exist
-    sender_cap = db.query(FarmCapital).filter(FarmCapital.farm_id == inv.sender_farm_id).first()
-    if sender_cap:
-        sender_cap.current_balance += inv.total_gross
-
-    receiver_cap = db.query(FarmCapital).filter(FarmCapital.farm_id == inv.receiver_farm_id).first()
-    if receiver_cap:
-        receiver_cap.current_balance -= inv.total_gross
+    _recompute_capital_for_farm(inv.sender_farm_id, db)
+    _recompute_capital_for_farm(inv.receiver_farm_id, db)
 
     db.commit()
     return {"message": "Rechnung bezahlt", "amount": inv.total_gross}
@@ -316,9 +335,3 @@ def cancel_invoice(invoice_id: int, db: Session = Depends(get_db), user: User = 
     db.commit()
     return {"message": "Rechnung storniert"}
 
-
-@router.get("/farms/all", response_model=List[dict])
-def list_all_farms(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    """List all farms (for invoice recipient selection)."""
-    farms = db.query(Farm).filter(Farm.is_active == True).all()
-    return [{"id": f.id, "name": f.name, "game_version": f.game_version, "owner_id": f.owner_id} for f in farms]

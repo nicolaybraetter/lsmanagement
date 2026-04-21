@@ -4,7 +4,7 @@ import { machinesApi } from '../services/api';
 import {
   Tractor, Plus, Trash2, X, ArrowLeftRight, ShoppingCart,
   CheckCircle2, Circle, Wrench, AlertCircle, BadgeCheck,
-  ChevronDown, Search, RotateCcw,
+  ChevronDown, Search, RotateCcw, Save, ClipboardList,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -24,6 +24,9 @@ interface Machine {
   lent_to_farm_id: number | null;
   lent_to_farm_name: string | null;
   notes: string | null;
+  purchase_date?: string | null;
+  current_value?: number;
+  operating_hours?: number;
 }
 
 interface Farm { id: number; name: string; game_version: string; }
@@ -57,6 +60,7 @@ const EMPTY_BUY = {
   name: '', brand: '', model: '', license_plate: '',
   year: '', category: 'Traktor', purchase_price: '', notes: '',
 };
+const EMPTY_SERVICE = { type: 'Wartung', title: '', description: '', cost: '', service_date: new Date().toISOString().split('T')[0] };
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
@@ -85,7 +89,7 @@ const inp = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:
 const sel = inp + ' bg-white appearance-none cursor-pointer';
 
 export default function MachinesPage() {
-  const { currentFarm, farms } = useFarmStore();
+  const { currentFarm } = useFarmStore();
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'available' | 'lent' | 'sold'>('all');
@@ -95,20 +99,31 @@ export default function MachinesPage() {
   const [lendTarget, setLendTarget] = useState<Machine | null>(null);
   const [sellTarget, setSellTarget] = useState<Machine | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Machine | null>(null);
+  const [editTarget, setEditTarget] = useState<Machine | null>(null);
+  const [serviceTarget, setServiceTarget] = useState<Machine | null>(null);
+  const [serviceEntries, setServiceEntries] = useState<any[]>([]);
 
   const [buyForm, setBuyForm] = useState<any>(EMPTY_BUY);
+  const [editForm, setEditForm] = useState<any>(EMPTY_BUY);
+  const [serviceForm, setServiceForm] = useState<any>(EMPTY_SERVICE);
   const [lendFarmId, setLendFarmId] = useState('');
   const [salePrice, setSalePrice] = useState('');
+  const [lendTargets, setLendTargets] = useState<Farm[]>([]);
   const [saving, setSaving] = useState(false);
-
-  const otherFarms: Farm[] = farms.filter((f: any) => f.id !== currentFarm?.id);
 
   useEffect(() => { if (currentFarm) load(); }, [currentFarm]);
 
   const load = async () => {
     if (!currentFarm) return;
     setLoading(true);
-    try { const r = await machinesApi.list(currentFarm.id); setMachines(r.data); }
+    try {
+      const [machineRes, lendTargetRes] = await Promise.all([
+        machinesApi.list(currentFarm.id),
+        machinesApi.lendTargets(currentFarm.id),
+      ]);
+      setMachines(machineRes.data);
+      setLendTargets(lendTargetRes.data);
+    }
     finally { setLoading(false); }
   };
 
@@ -169,6 +184,78 @@ export default function MachinesPage() {
       setMachines(ms => ms.filter(m => m.id !== deleteTarget.id));
       toast.success('Fahrzeug gelöscht'); setDeleteTarget(null);
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+  };
+
+  const openEdit = (machine: Machine) => {
+    setEditTarget(machine);
+    setEditForm({
+      name: machine.name || '',
+      brand: machine.brand || '',
+      model: machine.model || '',
+      license_plate: machine.license_plate || '',
+      year: machine.year || '',
+      category: machine.category || 'Sonstiges',
+      purchase_price: machine.purchase_price || 0,
+      notes: machine.notes || '',
+      current_value: machine.current_value || 0,
+      operating_hours: machine.operating_hours || 0,
+      status: machine.status || 'verfügbar',
+      purchase_date: machine.purchase_date ? String(machine.purchase_date).slice(0, 10) : '',
+    });
+  };
+
+  const handleEditSave = async () => {
+    if (!currentFarm || !editTarget || !editForm.name.trim()) return toast.error('Bezeichnung erforderlich');
+    setSaving(true);
+    try {
+      const r = await machinesApi.update(currentFarm.id, editTarget.id, {
+        ...editForm,
+        year: editForm.year ? parseInt(editForm.year) : null,
+        purchase_price: parseFloat(editForm.purchase_price) || 0,
+        current_value: parseFloat(editForm.current_value) || 0,
+        operating_hours: parseFloat(editForm.operating_hours) || 0,
+        purchase_date: editForm.purchase_date ? new Date(editForm.purchase_date).toISOString() : null,
+      });
+      setMachines(ms => ms.map(m => m.id === editTarget.id ? r.data : m));
+      setEditTarget(null);
+      toast.success('Fahrzeug aktualisiert');
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Fehler');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openService = async (machine: Machine) => {
+    if (!currentFarm) return;
+    setServiceTarget(machine);
+    setServiceForm(EMPTY_SERVICE);
+    try {
+      const r = await machinesApi.listServices(currentFarm.id, machine.id);
+      setServiceEntries(r.data);
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Servicehistorie konnte nicht geladen werden');
+    }
+  };
+
+  const createServiceEntry = async () => {
+    if (!currentFarm || !serviceTarget || !serviceForm.title.trim()) return toast.error('Titel erforderlich');
+    setSaving(true);
+    try {
+      const r = await machinesApi.createService(currentFarm.id, serviceTarget.id, {
+        ...serviceForm,
+        cost: parseFloat(serviceForm.cost) || 0,
+        service_date: new Date(serviceForm.service_date).toISOString(),
+      });
+      setServiceEntries(prev => [r.data, ...prev]);
+      setServiceForm(EMPTY_SERVICE);
+      await load();
+      toast.success('Serviceeintrag gespeichert');
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Fehler');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const filtered = machines.filter(m => {
@@ -331,6 +418,14 @@ export default function MachinesPage() {
                               className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition">
                               <ShoppingCart size={15} />
                             </button>
+                            <button onClick={() => openService(m)} title="Wartung/Reparatur"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition">
+                              <ClipboardList size={15} />
+                            </button>
+                            <button onClick={() => openEdit(m)} title="Bearbeiten"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition">
+                              <Save size={15} />
+                            </button>
                           </>
                         )}
                         <button onClick={() => setDeleteTarget(m)} title="Löschen"
@@ -419,16 +514,16 @@ export default function MachinesPage() {
         <Modal title={`Verleihen: ${lendTarget.name}`} onClose={() => setLendTarget(null)}>
           <div className="space-y-4">
             <p className="text-sm text-gray-500">An welchen Hof soll das Fahrzeug verliehen werden?</p>
-            {otherFarms.length === 0 ? (
+            {lendTargets.length === 0 ? (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
-                Du bist nur Mitglied dieses Hofes. Tritt einem weiteren Hof bei um Fahrzeuge dorthin verleihen zu können.
+                Keine weiteren aktiven Höfe gefunden.
               </div>
             ) : (
               <Field label="Zielhof">
                 <div className="relative">
                   <select value={lendFarmId} onChange={e => setLendFarmId(e.target.value)} className={sel}>
                     <option value="">— Hof auswählen —</option>
-                    {otherFarms.map((f: any) => <option key={f.id} value={f.id}>{f.name} ({f.game_version})</option>)}
+                    {lendTargets.map((f: any) => <option key={f.id} value={f.id}>{f.name} ({f.game_version})</option>)}
                   </select>
                   <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
@@ -488,6 +583,74 @@ export default function MachinesPage() {
               <button onClick={handleDelete} className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2">
                 <Trash2 size={15} /> Löschen
               </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {editTarget && (
+        <Modal title={`Fahrzeug bearbeiten: ${editTarget.name}`} onClose={() => setEditTarget(null)}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Bezeichnung *"><input className={inp} value={editForm.name} onChange={e => setEditForm((f: any) => ({ ...f, name: e.target.value }))} /></Field>
+              <Field label="Status">
+                <select className={sel} value={editForm.status} onChange={e => setEditForm((f: any) => ({ ...f, status: e.target.value }))}>
+                  {['verfügbar', 'im Einsatz', 'Wartung', 'defekt', 'verliehen', 'verkauft'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </Field>
+              <Field label="Marke"><input className={inp} value={editForm.brand} onChange={e => setEditForm((f: any) => ({ ...f, brand: e.target.value }))} /></Field>
+              <Field label="Modell"><input className={inp} value={editForm.model} onChange={e => setEditForm((f: any) => ({ ...f, model: e.target.value }))} /></Field>
+              <Field label="Kennzeichen"><input className={`${inp} font-mono`} value={editForm.license_plate} onChange={e => setEditForm((f: any) => ({ ...f, license_plate: e.target.value.toUpperCase() }))} /></Field>
+              <Field label="Baujahr"><input className={inp} type="number" value={editForm.year} onChange={e => setEditForm((f: any) => ({ ...f, year: e.target.value }))} /></Field>
+              <Field label="Kaufpreis (€)"><input className={inp} type="number" value={editForm.purchase_price} onChange={e => setEditForm((f: any) => ({ ...f, purchase_price: e.target.value }))} /></Field>
+              <Field label="Aktueller Wert (€)"><input className={inp} type="number" value={editForm.current_value} onChange={e => setEditForm((f: any) => ({ ...f, current_value: e.target.value }))} /></Field>
+              <Field label="Betriebsstunden"><input className={inp} type="number" step="0.1" value={editForm.operating_hours} onChange={e => setEditForm((f: any) => ({ ...f, operating_hours: e.target.value }))} /></Field>
+              <Field label="Kaufdatum"><input className={inp} type="date" value={editForm.purchase_date} onChange={e => setEditForm((f: any) => ({ ...f, purchase_date: e.target.value }))} /></Field>
+              <div className="col-span-2">
+                <Field label="Notizen"><textarea className={`${inp} resize-none`} rows={3} value={editForm.notes} onChange={e => setEditForm((f: any) => ({ ...f, notes: e.target.value }))} /></Field>
+              </div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setEditTarget(null)} className="flex-1 btn-secondary">Abbrechen</button>
+              <button onClick={handleEditSave} disabled={saving} className="flex-1 btn-primary flex items-center justify-center gap-2 disabled:opacity-50">
+                <Save size={15} /> Speichern
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {serviceTarget && (
+        <Modal title={`Wartung & Reparatur: ${serviceTarget.name}`} onClose={() => setServiceTarget(null)}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Typ">
+                <select className={sel} value={serviceForm.type} onChange={e => setServiceForm((f: any) => ({ ...f, type: e.target.value }))}>
+                  <option>Wartung</option>
+                  <option>Reparatur</option>
+                </select>
+              </Field>
+              <Field label="Datum">
+                <input className={inp} type="date" value={serviceForm.service_date} onChange={e => setServiceForm((f: any) => ({ ...f, service_date: e.target.value }))} />
+              </Field>
+              <div className="col-span-2"><Field label="Titel"><input className={inp} value={serviceForm.title} onChange={e => setServiceForm((f: any) => ({ ...f, title: e.target.value }))} placeholder="z. B. Ölwechsel" /></Field></div>
+              <Field label="Kosten (€)"><input className={inp} type="number" step="0.01" value={serviceForm.cost} onChange={e => setServiceForm((f: any) => ({ ...f, cost: e.target.value }))} /></Field>
+              <div className="col-span-2"><Field label="Beschreibung"><textarea className={`${inp} resize-none`} rows={2} value={serviceForm.description} onChange={e => setServiceForm((f: any) => ({ ...f, description: e.target.value }))} /></Field></div>
+            </div>
+            <button onClick={createServiceEntry} disabled={saving} className="w-full btn-primary disabled:opacity-50">Eintrag speichern</button>
+            <div className="max-h-64 overflow-y-auto space-y-2">
+              {serviceEntries.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">Noch keine Einträge vorhanden.</p>
+              ) : serviceEntries.map((entry: any) => (
+                <div key={entry.id} className="border border-gray-200 rounded-xl p-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-gray-900">{entry.title}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${entry.type === 'Reparatur' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{entry.type}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{new Date(entry.service_date).toLocaleDateString('de-DE')} · {fmt(entry.cost || 0)}</p>
+                  {entry.description && <p className="text-sm text-gray-600 mt-1">{entry.description}</p>}
+                </div>
+              ))}
             </div>
           </div>
         </Modal>
