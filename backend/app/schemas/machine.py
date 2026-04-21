@@ -8,11 +8,9 @@ class MachineCreate(BaseModel):
     name: str
     brand: Optional[str] = None
     model: Optional[str] = None
-    license_plate: Optional[str] = None
     year: Optional[int] = None
     category: MachineCategory = MachineCategory.other
     purchase_price: Optional[float] = 0
-    purchase_date: Optional[datetime] = None
     current_value: Optional[float] = 0
     hourly_rental_rate: Optional[float] = 0
     daily_rental_rate: Optional[float] = 0
@@ -32,35 +30,20 @@ class MachineOut(BaseModel):
     name: str
     brand: Optional[str]
     model: Optional[str]
-    license_plate: Optional[str]
     year: Optional[int]
     category: MachineCategory
     status: MachineStatus
     purchase_price: float
-    purchase_date: Optional[datetime]
     current_value: float
     hourly_rental_rate: float
     daily_rental_rate: float
     operating_hours: float
     notes: Optional[str]
     is_available_for_rental: bool
-    lent_to_farm_id: Optional[int]
-    lent_to_farm_name: Optional[str] = None
-    is_sold: bool
-    sale_price: float
-    sold_at: Optional[datetime]
     created_at: datetime
 
     class Config:
         from_attributes = True
-
-
-class LendRequest(BaseModel):
-    lent_to_farm_id: int
-
-
-class SellRequest(BaseModel):
-    sale_price: float
 
 
 class MachineRentalCreate(BaseModel):

@@ -31,8 +31,6 @@ export const authApi = {
   login: (data: any) => api.post('/api/auth/login', data),
   me: () => api.get('/api/auth/me'),
   updateProfile: (data: any) => api.put('/api/auth/me', data),
-  deleteAccount: () => api.delete('/api/auth/me'),
-  heartbeat: () => api.post('/api/auth/heartbeat'),
 };
 
 // Farms
@@ -44,10 +42,6 @@ export const farmsApi = {
   members: (id: number) => api.get(`/api/farms/${id}/members`),
   invite: (id: number, data: any) => api.post(`/api/farms/${id}/members/invite`, data),
   removeMember: (farmId: number, userId: number) => api.delete(`/api/farms/${farmId}/members/${userId}`),
-  pendingInvitations: () => api.get('/api/farms/invitations/pending'),
-  acceptInvitation: (id: number) => api.post(`/api/farms/invitations/${id}/accept`),
-  rejectInvitation: (id: number) => api.post(`/api/farms/invitations/${id}/reject`),
-  deleteFarm: (id: number) => api.delete(`/api/farms/${id}`),
 };
 
 // Machines
@@ -57,9 +51,6 @@ export const machinesApi = {
   create: (farmId: number, data: any) => api.post(`/api/farms/${farmId}/machines`, data),
   update: (farmId: number, id: number, data: any) => api.put(`/api/farms/${farmId}/machines/${id}`, data),
   delete: (farmId: number, id: number) => api.delete(`/api/farms/${farmId}/machines/${id}`),
-  lend: (farmId: number, id: number, lent_to_farm_id: number) => api.post(`/api/farms/${farmId}/machines/${id}/lend`, { lent_to_farm_id }),
-  unlend: (farmId: number, id: number) => api.post(`/api/farms/${farmId}/machines/${id}/unlend`),
-  sell: (farmId: number, id: number, sale_price: number) => api.post(`/api/farms/${farmId}/machines/${id}/sell`, { sale_price }),
   createRental: (farmId: number, machineId: number, data: any) => api.post(`/api/farms/${farmId}/machines/${machineId}/rentals`, data),
   listRentals: (farmId: number, machineId: number) => api.get(`/api/farms/${farmId}/machines/${machineId}/rentals`),
   returnRental: (farmId: number, machineId: number, rentalId: number) => api.put(`/api/farms/${farmId}/machines/${machineId}/rentals/${rentalId}/return`),
@@ -133,51 +124,11 @@ export const invoicesApi = {
   allFarms: () => api.get('/api/invoices/farms/all'),
 };
 
-// Admin
-const adminAxios = axios.create({ baseURL: '', headers: { 'Content-Type': 'application/json' } });
-adminAxios.interceptors.request.use((config) => {
-  const token = localStorage.getItem('admin_token');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-export const adminApi = {
-  login: (password: string) => adminAxios.post('/api/admin/auth', { password }),
-  listUsers: () => adminAxios.get('/api/admin/users'),
-  deleteUser: (id: number) => adminAxios.delete(`/api/admin/users/${id}`),
-  resetPassword: (id: number, new_password: string) => adminAxios.put(`/api/admin/users/${id}/password`, { new_password }),
-  updateCredentials: (id: number, new_username: string, new_email?: string) =>
-    adminAxios.put(`/api/admin/users/${id}/credentials`, { new_username, new_email }),
-  toggleActive: (id: number) => adminAxios.put(`/api/admin/users/${id}/toggle-active`),
-  getEmailConfig: () => adminAxios.get('/api/admin/email-config'),
-  updateEmailConfig: (data: any) => adminAxios.put('/api/admin/email-config', data),
-  deleteMessage: (id: number) => adminAxios.delete(`/api/support/${id}`),
-  deleteComment: (id: number) => adminAxios.delete(`/api/support/comments/${id}`),
-};
-
 // Support
 export const supportApi = {
   submit: (data: any) => api.post('/api/support', data),
   list: () => api.get('/api/support'),
   markReviewed: (id: number) => api.patch(`/api/support/${id}/review`),
-  listPublic: () => api.get('/api/support/public'),
-  postComment: (id: number, data: any) => api.post(`/api/support/${id}/comments`, data),
-};
-
-// Notifications
-export const notificationsApi = {
-  list: () => api.get('/api/notifications'),
-  unreadCount: () => api.get('/api/notifications/unread-count'),
-  markRead: (id: number) => api.patch(`/api/notifications/${id}/read`),
-  markAllRead: () => api.patch('/api/notifications/read-all'),
-  delete: (id: number) => api.delete(`/api/notifications/${id}`),
-};
-
-// Crop Rotation Plans
-export const cropPlansApi = {
-  list: (farmId: number) => api.get(`/api/farms/${farmId}/crop-plans`),
-  create: (farmId: number, data: any) => api.post(`/api/farms/${farmId}/crop-plans`, data),
-  delete: (farmId: number, planId: number) => api.delete(`/api/farms/${farmId}/crop-plans/${planId}`),
 };
 
 // Todos
