@@ -128,7 +128,36 @@ export const invoicesApi = {
 export const supportApi = {
   submit: (data: any) => api.post('/api/support', data),
   list: () => api.get('/api/support'),
+  listPublic: () => api.get('/api/support/public'),
   markReviewed: (id: number) => api.patch(`/api/support/${id}/review`),
+};
+
+// Separate axios instance for admin (uses admin_token, no redirect on 401)
+const adminAxios = axios.create({
+  baseURL: '',
+  headers: { 'Content-Type': 'application/json' },
+});
+
+adminAxios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+// Admin
+export const adminApi = {
+  login: (password: string) => api.post('/api/admin/auth', { password }),
+  listUsers: () => adminAxios.get('/api/admin/users'),
+  deleteUser: (id: number) => adminAxios.delete(`/api/admin/users/${id}`),
+  resetPassword: (id: number, newPassword: string) =>
+    adminAxios.put(`/api/admin/users/${id}/password`, { new_password: newPassword }),
+  updateCredentials: (id: number, newUsername: string, newEmail?: string) =>
+    adminAxios.put(`/api/admin/users/${id}/credentials`, { new_username: newUsername, new_email: newEmail }),
+  toggleActive: (id: number) => adminAxios.put(`/api/admin/users/${id}/toggle-active`),
+  getEmailConfig: () => adminAxios.get('/api/admin/email-config'),
+  updateEmailConfig: (data: any) => adminAxios.put('/api/admin/email-config', data),
+  deleteMessage: (id: number) => adminAxios.delete(`/api/support/${id}`),
+  deleteComment: (id: number) => adminAxios.delete(`/api/support/comments/${id}`),
 };
 
 // Todos
