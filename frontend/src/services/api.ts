@@ -31,6 +31,8 @@ export const authApi = {
   login: (data: any) => api.post('/api/auth/login', data),
   me: () => api.get('/api/auth/me'),
   updateProfile: (data: any) => api.put('/api/auth/me', data),
+  heartbeat: () => api.post('/api/auth/heartbeat'),
+  deleteAccount: () => api.delete('/api/auth/me'),
 };
 
 // Farms
@@ -39,9 +41,13 @@ export const farmsApi = {
   create: (data: any) => api.post('/api/farms', data),
   get: (id: number) => api.get(`/api/farms/${id}`),
   update: (id: number, data: any) => api.put(`/api/farms/${id}`, data),
+  deleteFarm: (id: number) => api.delete(`/api/farms/${id}`),
   members: (id: number) => api.get(`/api/farms/${id}/members`),
   invite: (id: number, data: any) => api.post(`/api/farms/${id}/members/invite`, data),
   removeMember: (farmId: number, userId: number) => api.delete(`/api/farms/${farmId}/members/${userId}`),
+  pendingInvitations: () => api.get('/api/farms/invitations/pending'),
+  acceptInvitation: (invId: number) => api.post(`/api/farms/invitations/${invId}/accept`),
+  rejectInvitation: (invId: number) => api.post(`/api/farms/invitations/${invId}/reject`),
 };
 
 // Machines
@@ -51,6 +57,12 @@ export const machinesApi = {
   create: (farmId: number, data: any) => api.post(`/api/farms/${farmId}/machines`, data),
   update: (farmId: number, id: number, data: any) => api.put(`/api/farms/${farmId}/machines/${id}`, data),
   delete: (farmId: number, id: number) => api.delete(`/api/farms/${farmId}/machines/${id}`),
+  lend: (farmId: number, machineId: number, targetFarmId: number) =>
+    api.post(`/api/farms/${farmId}/machines/${machineId}/lend`, { target_farm_id: targetFarmId }),
+  unlend: (farmId: number, machineId: number) =>
+    api.post(`/api/farms/${farmId}/machines/${machineId}/unlend`),
+  sell: (farmId: number, machineId: number, salePrice: number) =>
+    api.post(`/api/farms/${farmId}/machines/${machineId}/sell`, { sale_price: salePrice }),
   createRental: (farmId: number, machineId: number, data: any) => api.post(`/api/farms/${farmId}/machines/${machineId}/rentals`, data),
   listRentals: (farmId: number, machineId: number) => api.get(`/api/farms/${farmId}/machines/${machineId}/rentals`),
   returnRental: (farmId: number, machineId: number, rentalId: number) => api.put(`/api/farms/${farmId}/machines/${machineId}/rentals/${rentalId}/return`),
@@ -130,6 +142,14 @@ export const supportApi = {
   list: () => api.get('/api/support'),
   listPublic: () => api.get('/api/support/public'),
   markReviewed: (id: number) => api.patch(`/api/support/${id}/review`),
+  postComment: (msgId: number, data: any) => api.post(`/api/support/${msgId}/comments`, data),
+};
+
+// Crop Plans
+export const cropPlansApi = {
+  list: (farmId: number) => api.get(`/api/farms/${farmId}/crop-plans`),
+  create: (farmId: number, data: any) => api.post(`/api/farms/${farmId}/crop-plans`, data),
+  delete: (farmId: number, planId: number) => api.delete(`/api/farms/${farmId}/crop-plans/${planId}`),
 };
 
 // Separate axios instance for admin (uses admin_token, no redirect on 401)
@@ -168,4 +188,12 @@ export const todosApi = {
   createTask: (farmId: number, boardId: number, data: any) => api.post(`/api/farms/${farmId}/todos/boards/${boardId}/tasks`, data),
   updateTask: (farmId: number, boardId: number, taskId: number, data: any) => api.put(`/api/farms/${farmId}/todos/boards/${boardId}/tasks/${taskId}`, data),
   deleteTask: (farmId: number, boardId: number, taskId: number) => api.delete(`/api/farms/${farmId}/todos/boards/${boardId}/tasks/${taskId}`),
+};
+
+// Notifications
+export const notificationsApi = {
+  list: () => api.get('/api/notifications'),
+  markRead: (id: number) => api.patch(`/api/notifications/${id}/read`),
+  markAllRead: () => api.patch('/api/notifications/read-all'),
+  delete: (id: number) => api.delete(`/api/notifications/${id}`),
 };
