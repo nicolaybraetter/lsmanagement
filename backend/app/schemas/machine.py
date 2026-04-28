@@ -4,6 +4,14 @@ from datetime import datetime
 from app.models.machine import MachineCategory, MachineStatus, MachineServiceType
 
 
+class LendRequest(BaseModel):
+    lent_to_farm_id: int
+
+
+class SellRequest(BaseModel):
+    sale_price: float
+
+
 class MachineCreate(BaseModel):
     name: str
     brand: Optional[str] = None
@@ -17,6 +25,8 @@ class MachineCreate(BaseModel):
     operating_hours: Optional[float] = 0
     notes: Optional[str] = None
     is_available_for_rental: Optional[bool] = False
+    license_plate: Optional[str] = None
+    purchase_date: Optional[datetime] = None
 
 
 class MachineUpdate(MachineCreate):
@@ -28,9 +38,9 @@ class MachineOut(BaseModel):
     id: int
     farm_id: int
     name: str
-    brand: Optional[str]
-    model: Optional[str]
-    year: Optional[int]
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    year: Optional[int] = None
     category: MachineCategory
     status: MachineStatus
     purchase_price: float
@@ -38,8 +48,15 @@ class MachineOut(BaseModel):
     hourly_rental_rate: float
     daily_rental_rate: float
     operating_hours: float
-    notes: Optional[str]
+    notes: Optional[str] = None
     is_available_for_rental: bool
+    license_plate: Optional[str] = None
+    purchase_date: Optional[datetime] = None
+    lent_to_farm_id: Optional[int] = None
+    lent_to_farm_name: Optional[str] = None
+    is_sold: bool = False
+    sale_price: Optional[float] = None
+    sold_at: Optional[datetime] = None
     created_at: datetime
 
     class Config:
