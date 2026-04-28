@@ -66,7 +66,7 @@ def list_animals(farm_id: int, stable_id: int, db: Session = Depends(get_db), us
 @router.post("/stables/{stable_id}/animals", response_model=AnimalOut)
 def create_animal(farm_id: int, stable_id: int, data: AnimalCreate, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_access(farm_id, user, db)
-    animal = Animal(**data.model_dump(), stable_id=stable_id)
+    animal = Animal(**data.model_dump(exclude={'stable_id'}), stable_id=stable_id)
     db.add(animal)
     db.commit()
     db.refresh(animal)
