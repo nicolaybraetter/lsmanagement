@@ -350,6 +350,8 @@ docker stack deploy -c docker-compose.portainer.yml lsmanagement
 
 | Version | Datum | Highlights |
 |---------|-------|-----------|
+| v2.1 | Apr 2026 | Meilenstein „LSManagement jetzt nutzbar" — Sondernewsletter-Eintrag auf der Neuigkeiten-Seite, der alle 14 Module, Multiplayer-Rollen, 31 Fruchtsorten, Fuhrparkverleih und Stabilitätsfixes zusammenfasst |
+| v2.0 | Apr 2026 | Rechnungs-Badge in der Seitenleiste, geliehene Fahrzeuge im Fuhrpark des entleihenden Hofes, „Geliehen"-Filter und Statistik, Verleihziel im Fahrzeug-Bearbeitungsdialog editierbar, Maschinen-Servicewartung mit Buchung in die Hofkasse |
 | v1.9 | Apr 2026 | Discord-Supportchannel-Link in der Supportbox |
 | v1.8 | Apr 2026 | Hof löschen (Kaskadenlöschung aller Daten, Bestätigungseingabe), Fix: Cross-User-Farm-Bug beim Login |
 | v1.7 | Apr 2026 | Öffentliche Hilfeseite `/hilfe`, SEO-Optimierung (robots.txt, sitemap.xml, react-helmet-async), Sicherheits-Header (CSP, X-Frame-Options), Registrierungs-E-Mail an Betreiber |

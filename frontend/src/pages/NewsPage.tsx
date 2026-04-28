@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Tractor, ArrowLeft, Sprout, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare, HelpCircle, Trash2, MessagesSquare } from 'lucide-react';
+import { Tractor, ArrowLeft, Sprout, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare, HelpCircle, Trash2, MessagesSquare, Rocket } from 'lucide-react';
 
 interface NewsEntry {
   date: string;
@@ -14,6 +14,29 @@ interface NewsEntry {
 }
 
 const NEWS: NewsEntry[] = [
+  {
+    date: '28. April 2026',
+    version: 'v2.1',
+    title: 'LSManagement jetzt nutzbar — alle Module einsatzbereit',
+    tag: 'Meilenstein',
+    tagColor: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    icon: Rocket,
+    iconBg: 'bg-gradient-to-br from-emerald-500 to-green-700',
+    items: [
+      'LSManagement ist offiziell für die LS-Community freigegeben — kostenlos, multiplayer-fähig und vollständig',
+      '14 Dashboard-Module: Fuhrpark, Felder, Fruchtfolge, Finanzen, Lager, Tiere, Biogas, Scrum-Board, Mitglieder, Rechnungen, Preisliste, Hofeinstellungen, Profil und Übersicht',
+      'Multiplayer mit Rollen (Eigentümer · Manager · Mitarbeiter · Beobachter) und E-Mail-Einladungssystem',
+      '31 offizielle Fruchtsorten für LS22 & LS25 sowie eigene Fruchtfolgen-Pläne',
+      'Fuhrpark mit Kauf, Verleih, Rückgabe, Verkauf und Maschinen-Servicewartung — geliehene Fahrzeuge erscheinen direkt im Fuhrpark des entleihenden Hofes',
+      'Rechnungssystem zwischen Höfen mit Badge für offene Eingangsrechnungen in der Seitenleiste',
+      'Hofinternes Benachrichtigungssystem mit Glocke, Echtzeit-Polling und E-Mail bei Aufgabenzuweisung',
+      'Öffentliche Seiten: Hilfe & Anleitung, Wünsche & Anregungen (mit Kommentaren), Supportbox inkl. Discord-Channel',
+      'Vollständige Hof-Kaskadenlöschung mit Sicherheitsabfrage — alle verknüpften Daten werden sauber entfernt',
+      'Standalone-Installer für Ubuntu 24.04 sowie Docker-Swarm/Portainer-Deployment',
+      'SEO-Optimierung: robots.txt, sitemap.xml, react-helmet-async, Sicherheits-Header (CSP, X-Frame-Options)',
+      'Stabilitätsfixes: Tier- und Lageranlage ohne 422-Fehler, Fahrzeugverleih ohne Whitescreen-Crash, Cross-User-Farm-Bug behoben',
+    ],
+  },
   {
     date: '27. April 2026',
     version: 'v2.0',
