@@ -58,6 +58,8 @@ class MachineOut(BaseModel):
     sale_price: Optional[float] = None
     sold_at: Optional[datetime] = None
     created_at: datetime
+    is_borrowed: bool = False
+    owned_by_farm_name: Optional[str] = None
 
     class Config:
         from_attributes = True

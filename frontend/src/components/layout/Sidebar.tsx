@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { useFarmStore } from '../../store/farmStore';
 import { useSidebarStore } from '../../store/sidebarStore';
+import { invoicesApi } from '../../services/api';
 import {
   LayoutDashboard, Tractor, MapPin, TrendingUp, Package,
   PawPrint, Flame, CheckSquare, Users, RotateCcw, ChevronRight,
@@ -25,7 +26,7 @@ const farmNavItems = [
 
 const groups = ['Betrieb', 'Buchhaltung', 'Organisation'];
 
-function NavItem({ to, icon: Icon, label, end = false }: { to: string; icon: any; label: string; end?: boolean }) {
+function NavItem({ to, icon: Icon, label, end = false, badge }: { to: string; icon: any; label: string; end?: boolean; badge?: number }) {
   return (
     <NavLink
       to={to}
@@ -40,7 +41,12 @@ function NavItem({ to, icon: Icon, label, end = false }: { to: string; icon: any
         <>
           <Icon className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-700'}`} size={17} />
           <span className="flex-1">{label}</span>
-          {isActive && <ChevronRight size={13} className="text-white/70" />}
+          {badge != null && badge > 0 && (
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${isActive ? 'bg-white/20 text-white' : 'bg-red-500 text-white'}`}>
+              {badge > 99 ? '99+' : badge}
+            </span>
+          )}
+          {isActive && !badge && <ChevronRight size={13} className="text-white/70" />}
         </>
       )}
     </NavLink>
@@ -51,8 +57,16 @@ export default function Sidebar() {
   const { currentFarm } = useFarmStore();
   const { isOpen, close } = useSidebarStore();
   const location = useLocation();
+  const [invoiceBadge, setInvoiceBadge] = useState(0);
 
   useEffect(() => { close(); }, [location.pathname]);
+
+  useEffect(() => {
+    if (!currentFarm) { setInvoiceBadge(0); return; }
+    invoicesApi.pendingCount(currentFarm.id)
+      .then(r => setInvoiceBadge(r.data.count ?? 0))
+      .catch(() => setInvoiceBadge(0));
+  }, [currentFarm, location.pathname]);
 
   return (
     <>
@@ -109,7 +123,7 @@ export default function Sidebar() {
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 py-1.5">{group}</p>
                   <div className="space-y-0.5">
                     {items.map(({ to, icon, label }) => (
-                      <NavItem key={to} to={to} icon={icon} label={label} />
+                      <NavItem key={to} to={to} icon={icon} label={label} badge={to === '/dashboard/invoices' ? invoiceBadge : undefined} />
                     ))}
                   </div>
                 </div>

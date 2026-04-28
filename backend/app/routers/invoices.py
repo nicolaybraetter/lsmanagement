@@ -120,6 +120,17 @@ def set_capital(farm_id: int, data: FarmCapitalSet, db: Session = Depends(get_db
     return cap
 
 
+@router.get("/pending-count/{farm_id}")
+def pending_invoice_count(farm_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    if not _is_farm_member(farm_id, user, db):
+        raise HTTPException(status_code=403, detail="Kein Zugriff")
+    count = db.query(Invoice).filter(
+        Invoice.receiver_farm_id == farm_id,
+        Invoice.status.in_([InvoiceStatus.sent, InvoiceStatus.viewed, InvoiceStatus.overdue])
+    ).count()
+    return {"count": count}
+
+
 @router.get("/farms/all", response_model=List[dict])
 def list_all_farms(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """List all farms (for invoice recipient selection)."""

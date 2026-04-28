@@ -15,6 +15,21 @@ interface NewsEntry {
 
 const NEWS: NewsEntry[] = [
   {
+    date: '27. April 2026',
+    version: 'v2.0',
+    title: 'Rechnungs-Badge & Fahrzeugverleih verbessert',
+    tag: 'Feature',
+    tagColor: 'bg-green-100 text-green-700 border-green-200',
+    icon: Tractor,
+    iconBg: 'bg-green-600',
+    items: [
+      'Roter Badge neben "Rechnungen" im Menü zeigt Anzahl offener Eingangsrechnungen',
+      'Geliehene Fahrzeuge erscheinen nun im Fuhrpark des entleihenden Hofes',
+      'Neuer "Geliehen"-Filter und Statistik im Fuhrpark',
+      'Fahrzeug zurückgeben direkt aus dem Fuhrpark des entleihenden Hofes',
+    ],
+  },
+  {
     date: '19. April 2026',
     version: 'v1.9',
     title: 'Discord-Supportchannel in der Supportbox',

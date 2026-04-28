@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 
 interface Machine {
   id: number;
+  farm_id: number;
   name: string;
   brand: string | null;
   model: string | null;
@@ -27,6 +28,8 @@ interface Machine {
   purchase_date?: string | null;
   current_value?: number;
   operating_hours?: number;
+  is_borrowed: boolean;
+  owned_by_farm_name: string | null;
 }
 
 interface Farm { id: number; name: string; game_version: string; }
@@ -92,7 +95,7 @@ export default function MachinesPage() {
   const { currentFarm } = useFarmStore();
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'available' | 'lent' | 'sold'>('all');
+  const [filter, setFilter] = useState<'all' | 'available' | 'lent' | 'sold' | 'borrowed'>('all');
   const [search, setSearch] = useState('');
 
   const [buyModal, setBuyModal] = useState(false);
@@ -160,6 +163,15 @@ export default function MachinesPage() {
       const r = await machinesApi.unlend(currentFarm.id, machine.id);
       setMachines(ms => ms.map(m => m.id === machine.id ? r.data : m));
       toast.success('Fahrzeug zurückgekehrt');
+    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+  };
+
+  const handleReturnBorrowed = async (machine: Machine) => {
+    if (!currentFarm) return;
+    try {
+      await machinesApi.returnBorrowed(currentFarm.id, machine.id);
+      setMachines(ms => ms.filter(m => !(m.id === machine.id && m.is_borrowed)));
+      toast.success(`„${machine.name}" zurückgegeben`);
     } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
   };
 
@@ -258,22 +270,27 @@ export default function MachinesPage() {
     }
   };
 
+  const ownMachines = machines.filter(m => !m.is_borrowed);
+  const borrowedMachines = machines.filter(m => m.is_borrowed);
+
   const filtered = machines.filter(m => {
     const q = search.toLowerCase();
     const ok = !q || m.name.toLowerCase().includes(q) || (m.brand || '').toLowerCase().includes(q) ||
       (m.license_plate || '').toLowerCase().includes(q) || m.category.toLowerCase().includes(q);
     if (!ok) return false;
-    if (filter === 'available') return !m.is_sold && m.status !== 'verliehen';
-    if (filter === 'lent') return m.status === 'verliehen' && !m.is_sold;
+    if (filter === 'available') return !m.is_sold && m.status !== 'verliehen' && !m.is_borrowed;
+    if (filter === 'lent') return m.status === 'verliehen' && !m.is_sold && !m.is_borrowed;
     if (filter === 'sold') return m.is_sold;
+    if (filter === 'borrowed') return m.is_borrowed;
     return true;
   });
 
   const counts = {
-    total: machines.length,
-    available: machines.filter(m => !m.is_sold && m.status === 'verfügbar').length,
-    lent: machines.filter(m => m.status === 'verliehen' && !m.is_sold).length,
-    sold: machines.filter(m => m.is_sold).length,
+    total: ownMachines.length,
+    available: ownMachines.filter(m => !m.is_sold && m.status === 'verfügbar').length,
+    lent: ownMachines.filter(m => m.status === 'verliehen' && !m.is_sold).length,
+    sold: ownMachines.filter(m => m.is_sold).length,
+    borrowed: borrowedMachines.length,
   };
 
   const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
@@ -297,11 +314,12 @@ export default function MachinesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { label: 'Gesamt', value: counts.total, color: 'text-gray-900' },
           { label: 'Verfügbar', value: counts.available, color: 'text-green-600' },
           { label: 'Verliehen', value: counts.lent, color: 'text-purple-600' },
+          { label: 'Geliehen', value: counts.borrowed, color: 'text-blue-600' },
           { label: 'Verkauft', value: counts.sold, color: 'text-gray-400' },
         ].map(s => (
           <div key={s.label} className="card py-3">
@@ -319,8 +337,8 @@ export default function MachinesPage() {
             className="w-full border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
         </div>
         <div className="flex gap-1.5 flex-wrap">
-          {(['all', 'available', 'lent', 'sold'] as const).map(f => {
-            const labels = { all: 'Alle', available: 'Verfügbar', lent: 'Verliehen', sold: 'Verkauft' };
+          {(['all', 'available', 'lent', 'borrowed', 'sold'] as const).map(f => {
+            const labels = { all: 'Alle', available: 'Verfügbar', lent: 'Verliehen', borrowed: 'Geliehen', sold: 'Verkauft' };
             return (
               <button key={f} onClick={() => setFilter(f)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${filter === f ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
@@ -362,12 +380,17 @@ export default function MachinesPage() {
               </thead>
               <tbody>
                 {filtered.map(m => (
-                  <tr key={m.id} className={`border-b border-gray-50 hover:bg-gray-50/60 transition ${m.is_sold ? 'opacity-60' : ''}`}>
+                  <tr key={`${m.id}-${m.is_borrowed ? 'borrowed' : 'own'}`} className={`border-b border-gray-50 hover:bg-gray-50/60 transition ${m.is_sold ? 'opacity-60' : ''} ${m.is_borrowed ? 'bg-blue-50/30' : ''}`}>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <span className="text-xl">{CATEGORY_ICONS[m.category] || '🔩'}</span>
                         <div>
-                          <p className="font-semibold text-gray-900">{m.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-gray-900">{m.name}</p>
+                            {m.is_borrowed && (
+                              <span className="text-xs bg-blue-100 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium">Geliehen</span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-400">{[m.brand, m.model, m.year].filter(Boolean).join(' · ')}</p>
                         </div>
                       </div>
@@ -395,43 +418,54 @@ export default function MachinesPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 hidden lg:table-cell">
-                      {m.lent_to_farm_name
-                        ? <span className="flex items-center gap-1 text-purple-600 text-xs font-medium"><ArrowLeftRight size={12} />{m.lent_to_farm_name}</span>
-                        : <span className="text-gray-300">—</span>}
+                      {m.is_borrowed && m.owned_by_farm_name
+                        ? <span className="flex items-center gap-1 text-blue-600 text-xs font-medium"><ArrowLeftRight size={12} />von {m.owned_by_farm_name}</span>
+                        : m.lent_to_farm_name
+                          ? <span className="flex items-center gap-1 text-purple-600 text-xs font-medium"><ArrowLeftRight size={12} />{m.lent_to_farm_name}</span>
+                          : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1">
-                        {!m.is_sold && (
+                        {m.is_borrowed ? (
+                          <button onClick={() => handleReturnBorrowed(m)} title="Zurückgeben"
+                            className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 transition flex items-center gap-1 text-xs font-medium px-2">
+                            <RotateCcw size={14} /> Zurückgeben
+                          </button>
+                        ) : (
                           <>
-                            {m.status === 'verliehen' ? (
-                              <button onClick={() => handleUnlend(m)} title="Zurückgekehrt"
-                                className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 transition">
-                                <RotateCcw size={15} />
-                              </button>
-                            ) : (
-                              <button onClick={() => { setLendTarget(m); setLendFarmId(''); }} title="Verleihen"
-                                className="p-1.5 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition">
-                                <ArrowLeftRight size={15} />
-                              </button>
+                            {!m.is_sold && (
+                              <>
+                                {m.status === 'verliehen' ? (
+                                  <button onClick={() => handleUnlend(m)} title="Zurückgekehrt"
+                                    className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 transition">
+                                    <RotateCcw size={15} />
+                                  </button>
+                                ) : (
+                                  <button onClick={() => { setLendTarget(m); setLendFarmId(''); }} title="Verleihen"
+                                    className="p-1.5 rounded-lg text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition">
+                                    <ArrowLeftRight size={15} />
+                                  </button>
+                                )}
+                                <button onClick={() => { setSellTarget(m); setSalePrice(''); }} title="Verkaufen"
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition">
+                                  <ShoppingCart size={15} />
+                                </button>
+                                <button onClick={() => openService(m)} title="Wartung/Reparatur"
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition">
+                                  <ClipboardList size={15} />
+                                </button>
+                                <button onClick={() => openEdit(m)} title="Bearbeiten"
+                                  className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition">
+                                  <Save size={15} />
+                                </button>
+                              </>
                             )}
-                            <button onClick={() => { setSellTarget(m); setSalePrice(''); }} title="Verkaufen"
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition">
-                              <ShoppingCart size={15} />
-                            </button>
-                            <button onClick={() => openService(m)} title="Wartung/Reparatur"
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition">
-                              <ClipboardList size={15} />
-                            </button>
-                            <button onClick={() => openEdit(m)} title="Bearbeiten"
-                              className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition">
-                              <Save size={15} />
+                            <button onClick={() => setDeleteTarget(m)} title="Löschen"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition">
+                              <Trash2 size={15} />
                             </button>
                           </>
                         )}
-                        <button onClick={() => setDeleteTarget(m)} title="Löschen"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition">
-                          <Trash2 size={15} />
-                        </button>
                       </div>
                     </td>
                   </tr>

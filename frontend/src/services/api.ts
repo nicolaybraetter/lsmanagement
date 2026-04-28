@@ -69,6 +69,7 @@ export const machinesApi = {
   listServices: (farmId: number, machineId: number) => api.get(`/api/farms/${farmId}/machines/${machineId}/services`),
   createService: (farmId: number, machineId: number, data: any) => api.post(`/api/farms/${farmId}/machines/${machineId}/services`, data),
   deleteService: (farmId: number, machineId: number, entryId: number) => api.delete(`/api/farms/${farmId}/machines/${machineId}/services/${entryId}`),
+  returnBorrowed: (farmId: number, machineId: number) => api.post(`/api/farms/${farmId}/machines/${machineId}/return-borrowed`),
 };
 
 // Fields
@@ -122,6 +123,8 @@ export const biogasApi = {
 
 // Invoices & Capital
 export const invoicesApi = {
+  // Pending count
+  pendingCount: (farmId: number) => api.get(`/api/invoices/pending-count/${farmId}`),
   // Capital
   getCapital: (farmId: number) => api.get(`/api/invoices/capital/${farmId}`),
   setCapital: (farmId: number, data: any) => api.put(`/api/invoices/capital/${farmId}`, data),

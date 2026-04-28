@@ -27,18 +27,28 @@ def check_access(farm_id: int, user: User, db: Session):
         raise HTTPException(status_code=403, detail="Kein Zugriff")
 
 
-def _machine_out(machine: Machine, db: Session) -> dict:
+def _machine_out(machine: Machine, db: Session, is_borrowed: bool = False, owned_by_farm_name: str | None = None) -> dict:
     data = {c.name: getattr(machine, c.name) for c in machine.__table__.columns}
     lent_farm = db.query(Farm).filter(Farm.id == machine.lent_to_farm_id).first() if machine.lent_to_farm_id else None
     data["lent_to_farm_name"] = lent_farm.name if lent_farm else None
+    data["is_borrowed"] = is_borrowed
+    data["owned_by_farm_name"] = owned_by_farm_name
     return data
 
 
 @router.get("", response_model=List[MachineOut])
 def list_machines(farm_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     check_access(farm_id, user, db)
-    machines = db.query(Machine).filter(Machine.farm_id == farm_id).all()
-    return [_machine_out(m, db) for m in machines]
+    own_machines = db.query(Machine).filter(Machine.farm_id == farm_id).all()
+    borrowed_machines = db.query(Machine).filter(
+        Machine.lent_to_farm_id == farm_id,
+        Machine.is_sold == False,
+    ).all()
+    result = [_machine_out(m, db) for m in own_machines]
+    for m in borrowed_machines:
+        owner_farm = db.query(Farm).filter(Farm.id == m.farm_id).first()
+        result.append(_machine_out(m, db, is_borrowed=True, owned_by_farm_name=owner_farm.name if owner_farm else None))
+    return result
 
 
 @router.get("/lend-targets")
@@ -122,6 +132,19 @@ def unlend_machine(farm_id: int, machine_id: int, db: Session = Depends(get_db),
     machine = db.query(Machine).filter(Machine.id == machine_id, Machine.farm_id == farm_id).first()
     if not machine:
         raise HTTPException(status_code=404, detail="Fahrzeug nicht gefunden")
+    machine.lent_to_farm_id = None
+    machine.status = MachineStatus.available
+    db.commit()
+    db.refresh(machine)
+    return _machine_out(machine, db)
+
+
+@router.post("/{machine_id}/return-borrowed", response_model=MachineOut)
+def return_borrowed_machine(farm_id: int, machine_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    check_access(farm_id, user, db)
+    machine = db.query(Machine).filter(Machine.id == machine_id, Machine.lent_to_farm_id == farm_id).first()
+    if not machine:
+        raise HTTPException(status_code=404, detail="Geliehenes Fahrzeug nicht gefunden")
     machine.lent_to_farm_id = None
     machine.status = MachineStatus.available
     db.commit()

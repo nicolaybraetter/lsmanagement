@@ -71,7 +71,7 @@ Bei Build- oder Laufzeitfehlern:
 
 ---
 
-## Aktueller Softwarestand (v1.7)
+## Aktueller Softwarestand (v2.0)
 
 ### Öffentliche Seiten (kein Login nötig)
 | Route | Seite |
