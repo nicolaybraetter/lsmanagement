@@ -58,7 +58,7 @@ export const machinesApi = {
   update: (farmId: number, id: number, data: any) => api.put(`/api/farms/${farmId}/machines/${id}`, data),
   delete: (farmId: number, id: number) => api.delete(`/api/farms/${farmId}/machines/${id}`),
   lend: (farmId: number, machineId: number, targetFarmId: number) =>
-    api.post(`/api/farms/${farmId}/machines/${machineId}/lend`, { target_farm_id: targetFarmId }),
+    api.post(`/api/farms/${farmId}/machines/${machineId}/lend`, { lent_to_farm_id: targetFarmId }),
   unlend: (farmId: number, machineId: number) =>
     api.post(`/api/farms/${farmId}/machines/${machineId}/unlend`),
   sell: (farmId: number, machineId: number, salePrice: number) =>

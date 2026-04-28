@@ -141,7 +141,7 @@ export default function MachinesPage() {
       });
       toast.success(`„${buyForm.name}" zum Fuhrpark hinzugefügt`);
       setBuyModal(false); setBuyForm(EMPTY_BUY); load();
-    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+    } catch (e: any) { const d = e.response?.data?.detail; toast.error(Array.isArray(d) ? d[0]?.msg || 'Fehler' : d || 'Fehler'); }
     finally { setSaving(false); }
   };
 
@@ -153,7 +153,7 @@ export default function MachinesPage() {
       setMachines(ms => ms.map(m => m.id === lendTarget.id ? r.data : m));
       toast.success(`Fahrzeug an „${r.data.lent_to_farm_name}" verliehen`);
       setLendTarget(null); setLendFarmId('');
-    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+    } catch (e: any) { const d = e.response?.data?.detail; toast.error(Array.isArray(d) ? d[0]?.msg || 'Fehler' : d || 'Fehler'); }
     finally { setSaving(false); }
   };
 
@@ -163,7 +163,7 @@ export default function MachinesPage() {
       const r = await machinesApi.unlend(currentFarm.id, machine.id);
       setMachines(ms => ms.map(m => m.id === machine.id ? r.data : m));
       toast.success('Fahrzeug zurückgekehrt');
-    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+    } catch (e: any) { const d = e.response?.data?.detail; toast.error(Array.isArray(d) ? d[0]?.msg || 'Fehler' : d || 'Fehler'); }
   };
 
   const handleReturnBorrowed = async (machine: Machine) => {
@@ -172,7 +172,7 @@ export default function MachinesPage() {
       await machinesApi.returnBorrowed(currentFarm.id, machine.id);
       setMachines(ms => ms.filter(m => !(m.id === machine.id && m.is_borrowed)));
       toast.success(`„${machine.name}" zurückgegeben`);
-    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+    } catch (e: any) { const d = e.response?.data?.detail; toast.error(Array.isArray(d) ? d[0]?.msg || 'Fehler' : d || 'Fehler'); }
   };
 
   const handleSell = async () => {
@@ -185,7 +185,7 @@ export default function MachinesPage() {
       setMachines(ms => ms.map(m => m.id === sellTarget.id ? r.data : m));
       toast.success(`„${sellTarget.name}" verkauft — ${price.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })} gutgeschrieben`);
       setSellTarget(null); setSalePrice('');
-    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+    } catch (e: any) { const d = e.response?.data?.detail; toast.error(Array.isArray(d) ? d[0]?.msg || 'Fehler' : d || 'Fehler'); }
     finally { setSaving(false); }
   };
 
@@ -195,7 +195,7 @@ export default function MachinesPage() {
       await machinesApi.delete(currentFarm.id, deleteTarget.id);
       setMachines(ms => ms.filter(m => m.id !== deleteTarget.id));
       toast.success('Fahrzeug gelöscht'); setDeleteTarget(null);
-    } catch (e: any) { toast.error(e.response?.data?.detail || 'Fehler'); }
+    } catch (e: any) { const d = e.response?.data?.detail; toast.error(Array.isArray(d) ? d[0]?.msg || 'Fehler' : d || 'Fehler'); }
   };
 
   const openEdit = (machine: Machine) => {
