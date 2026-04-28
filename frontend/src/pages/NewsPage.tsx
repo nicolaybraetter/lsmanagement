@@ -32,7 +32,6 @@ const NEWS: NewsEntry[] = [
       'Hofinternes Benachrichtigungssystem mit Glocke, Echtzeit-Polling und E-Mail bei Aufgabenzuweisung',
       'Öffentliche Seiten: Hilfe & Anleitung, Wünsche & Anregungen (mit Kommentaren), Supportbox inkl. Discord-Channel',
       'Vollständige Hof-Kaskadenlöschung mit Sicherheitsabfrage — alle verknüpften Daten werden sauber entfernt',
-      'Standalone-Installer für Ubuntu 24.04 sowie Docker-Swarm/Portainer-Deployment',
       'SEO-Optimierung: robots.txt, sitemap.xml, react-helmet-async, Sicherheits-Header (CSP, X-Frame-Options)',
       'Stabilitätsfixes: Tier- und Lageranlage ohne 422-Fehler, Fahrzeugverleih ohne Whitescreen-Crash, Cross-User-Farm-Bug behoben',
     ],
