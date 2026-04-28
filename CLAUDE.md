@@ -7,7 +7,8 @@
 **1.1 SSH auf dem Server:**
 ```bash
 cd ~/lsmanagement
-git pull origin claude/farm-management-system-6KPmN
+git fetch origin
+git reset --hard origin/main
 docker compose build --no-cache
 ```
 
@@ -45,15 +46,14 @@ Nach jedem Feature die `README.md` aktuell halten:
 
 ### 4. GitHub immer aktuell halten
 
-- Branch: `claude/farm-management-system-6KPmN`
+- Branch: `main`
 - Nach jeder Änderung committen und pushen:
 ```bash
 git add <dateien>
 git commit -m "feat/fix/chore: Beschreibung"
-git push -u origin claude/farm-management-system-6KPmN
+git push origin main
 ```
 - Commit-Messages auf Englisch, aussagekräftig
-- Niemals auf `main` pushen
 
 ---
 
