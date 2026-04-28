@@ -33,7 +33,7 @@ class StableOut(BaseModel):
 
 
 class AnimalCreate(BaseModel):
-    stable_id: int
+    stable_id: Optional[int] = None
     animal_type: AnimalType
     name: Optional[str] = None
     ear_tag: Optional[str] = None

@@ -40,7 +40,7 @@ class StorageItemOut(BaseModel):
 
 
 class StorageTransactionCreate(BaseModel):
-    storage_item_id: int
+    storage_item_id: Optional[int] = None
     transaction_type: str
     quantity: float
     price_per_unit: Optional[float] = None
