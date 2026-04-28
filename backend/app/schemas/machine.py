@@ -32,6 +32,7 @@ class MachineCreate(BaseModel):
 class MachineUpdate(MachineCreate):
     name: Optional[str] = None
     status: Optional[MachineStatus] = None
+    lent_to_farm_id: Optional[int] = None
 
 
 class MachineOut(BaseModel):

@@ -90,7 +90,19 @@ def update_machine(farm_id: int, machine_id: int, data: MachineUpdate, db: Sessi
     machine = db.query(Machine).filter(Machine.id == machine_id, Machine.farm_id == farm_id).first()
     if not machine:
         raise HTTPException(status_code=404, detail="Fahrzeug nicht gefunden")
-    for field, value in data.model_dump(exclude_unset=True).items():
+    payload = data.model_dump(exclude_unset=True)
+    # Validate target farm when lent_to_farm_id is being set
+    if "lent_to_farm_id" in payload:
+        new_lend = payload["lent_to_farm_id"]
+        if new_lend is not None:
+            if not db.query(Farm).filter(Farm.id == new_lend).first():
+                raise HTTPException(status_code=404, detail="Zielhof nicht gefunden")
+            if "status" not in payload:
+                payload["status"] = MachineStatus.rented_out
+        else:
+            if "status" not in payload:
+                payload["status"] = MachineStatus.available
+    for field, value in payload.items():
         setattr(machine, field, value)
     db.commit()
     db.refresh(machine)

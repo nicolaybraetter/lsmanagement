@@ -213,6 +213,7 @@ export default function MachinesPage() {
       operating_hours: machine.operating_hours || 0,
       status: machine.status || 'verfügbar',
       purchase_date: machine.purchase_date ? String(machine.purchase_date).slice(0, 10) : '',
+      lent_to_farm_id: machine.lent_to_farm_id ?? '',
     });
   };
 
@@ -227,6 +228,7 @@ export default function MachinesPage() {
         current_value: parseFloat(editForm.current_value) || 0,
         operating_hours: parseFloat(editForm.operating_hours) || 0,
         purchase_date: editForm.purchase_date ? new Date(editForm.purchase_date).toISOString() : null,
+        lent_to_farm_id: editForm.lent_to_farm_id !== '' ? parseInt(editForm.lent_to_farm_id) : null,
       });
       setMachines(ms => ms.map(m => m.id === editTarget.id ? r.data : m));
       setEditTarget(null);
@@ -632,6 +634,30 @@ export default function MachinesPage() {
                   {['verfügbar', 'im Einsatz', 'Wartung', 'defekt', 'verliehen', 'verkauft'].map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </Field>
+              <div className="col-span-2">
+                <Field label="Verliehen an (Hof)">
+                  <div className="relative">
+                    <select
+                      className={sel}
+                      value={editForm.lent_to_farm_id}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setEditForm((f: any) => ({
+                          ...f,
+                          lent_to_farm_id: val,
+                          status: val ? 'verliehen' : (f.status === 'verliehen' ? 'verfügbar' : f.status),
+                        }));
+                      }}
+                    >
+                      <option value="">— Nicht verliehen —</option>
+                      {lendTargets.map((f: any) => (
+                        <option key={f.id} value={f.id}>{f.name} ({f.game_version})</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  </div>
+                </Field>
+              </div>
               <Field label="Marke"><input className={inp} value={editForm.brand} onChange={e => setEditForm((f: any) => ({ ...f, brand: e.target.value }))} /></Field>
               <Field label="Modell"><input className={inp} value={editForm.model} onChange={e => setEditForm((f: any) => ({ ...f, model: e.target.value }))} /></Field>
               <Field label="Kennzeichen"><input className={`${inp} font-mono`} value={editForm.license_plate} onChange={e => setEditForm((f: any) => ({ ...f, license_plate: e.target.value.toUpperCase() }))} /></Field>
