@@ -213,8 +213,8 @@ def remove_member(farm_id: int, user_id: int, db: Session = Depends(get_db), use
 
 @router.delete("/{farm_id}")
 def delete_farm(farm_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    from app.models.machine import Machine, MachineRental
-    from app.models.field import Field, CropRotationPlan
+    from app.models.machine import Machine, MachineRental, MachineServiceEntry
+    from app.models.field import Field, CropRotationEntry, CropRotationPlan
     from app.models.finance import FinanceEntry
     from app.models.storage import StorageItem, StorageTransaction
     from app.models.animal import Stable, Animal
@@ -228,20 +228,24 @@ def delete_farm(farm_id: int, db: Session = Depends(get_db), user: User = Depend
     if farm.owner_id != user.id:
         raise HTTPException(status_code=403, detail="Nur der Eigentümer kann den Hof löschen")
 
-    # Machines & rentals
+    # Machines: service entries + rentals + lend references
     machine_ids = [m.id for m in db.query(Machine).filter(Machine.farm_id == farm_id).all()]
     if machine_ids:
+        db.query(MachineServiceEntry).filter(MachineServiceEntry.machine_id.in_(machine_ids)).delete(synchronize_session=False)
         db.query(MachineRental).filter(MachineRental.machine_id.in_(machine_ids)).delete(synchronize_session=False)
     db.query(Machine).filter(Machine.farm_id == farm_id).delete(synchronize_session=False)
     db.query(Machine).filter(Machine.lent_to_farm_id == farm_id).update(
         {"lent_to_farm_id": None}, synchronize_session=False
     )
 
-    # Fields & crop rotation
+    # Fields & crop rotation entries
     field_ids = [f.id for f in db.query(Field).filter(Field.farm_id == farm_id).all()]
     if field_ids:
-        db.query(CropRotationPlan).filter(CropRotationPlan.field_id.in_(field_ids)).delete(synchronize_session=False)
+        db.query(CropRotationEntry).filter(CropRotationEntry.field_id.in_(field_ids)).delete(synchronize_session=False)
     db.query(Field).filter(Field.farm_id == farm_id).delete(synchronize_session=False)
+
+    # Crop rotation plans (farm-level)
+    db.query(CropRotationPlan).filter(CropRotationPlan.farm_id == farm_id).delete(synchronize_session=False)
 
     # Finances
     db.query(FinanceEntry).filter(FinanceEntry.farm_id == farm_id).delete(synchronize_session=False)
@@ -259,10 +263,10 @@ def delete_farm(farm_id: int, db: Session = Depends(get_db), user: User = Depend
     db.query(Stable).filter(Stable.farm_id == farm_id).delete(synchronize_session=False)
 
     # Biogas
-    plant = db.query(BiogasPlant).filter(BiogasPlant.farm_id == farm_id).first()
-    if plant:
-        db.query(BiogasFeedEntry).filter(BiogasFeedEntry.plant_id == plant.id).delete(synchronize_session=False)
-        db.delete(plant)
+    plant_ids = [p.id for p in db.query(BiogasPlant).filter(BiogasPlant.farm_id == farm_id).all()]
+    if plant_ids:
+        db.query(BiogasFeedEntry).filter(BiogasFeedEntry.plant_id.in_(plant_ids)).delete(synchronize_session=False)
+    db.query(BiogasPlant).filter(BiogasPlant.farm_id == farm_id).delete(synchronize_session=False)
 
     # Todo boards & tasks
     board_ids = [b.id for b in db.query(TodoBoard).filter(TodoBoard.farm_id == farm_id).all()]
