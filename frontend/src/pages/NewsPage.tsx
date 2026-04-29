@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { Tractor, ArrowLeft, Sprout, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare, HelpCircle, Trash2, MessagesSquare, Rocket } from 'lucide-react';
+import { Tractor, ArrowLeft, Sprout, Users, ShieldCheck, Tractor as TractorIcon, Leaf, Star, Bell, MessageSquare, HelpCircle, Trash2, MessagesSquare, Rocket, Wrench } from 'lucide-react';
 
 interface NewsEntry {
   date: string;
@@ -14,6 +14,22 @@ interface NewsEntry {
 }
 
 const NEWS: NewsEntry[] = [
+  {
+    date: '28. April 2026',
+    version: 'v2.2',
+    title: 'Bugfixes: Lager, Tiere & Fahrzeugverleih',
+    tag: 'Fix',
+    tagColor: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    icon: Wrench,
+    iconBg: 'bg-yellow-600',
+    items: [
+      'Fix: Beim Verbuchen von Lagerein- und -ausgängen erschien ein Fehler — jetzt behoben',
+      'Fix: Tiere konnten nach dem Anlegen eines Stalls nicht gespeichert werden — Fehler behoben',
+      'Fix: "Verleihen"-Aktion führte zu einer weißen Seite und speicherte den Ziel-Hof nicht — korrigiert',
+      'Fahrzeug bearbeiten: Ziel-Hof beim Verleihen kann jetzt direkt im Bearbeitungs-Dialog gesetzt oder geändert werden',
+      'Fix: Fahrzeug zurückgeben aus dem Fuhrpark des entleihenden Hofes funktioniert jetzt zuverlässig',
+    ],
+  },
   {
     date: '28. April 2026',
     version: 'v2.1',
